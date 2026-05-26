@@ -29,7 +29,7 @@ from System.ComponentModel import (
 
 from pyrevit import forms
 
-from bim_core import log as log_module
+from bim_core import errors, log as log_module
 from bim_core.core import discipline_config
 
 from dimension_qa import (
@@ -337,6 +337,7 @@ class DimensionWindow(forms.WPFWindow):
         forms.WPFWindow.__init__(self, XAML_FILE)
         self.doc = doc
         self.view = view
+        self._logger = log_module.get_logger(doc, tool_name="auto_dimension")
         self.scan_options = rules._deep_copy(rules.DEFAULT_SCAN_OPTIONS)
         self.rows = ObservableCollection[object]()
         self._row_cache = {}
@@ -547,9 +548,9 @@ class DimensionWindow(forms.WPFWindow):
             self.records = dimensioning_engine.scan(
                 self.doc, self.view, profiles)
         except Exception as exc:
-            log_module.get_logger(
-                self.doc, tool_name="auto_dimension").exception("Scan failed")
-            forms.alert("Scan failed: {0}".format(exc), exitscript=False)
+            errors.show_error("auto_dimension",
+                              "Couldn't scan the model for dimension candidates.",
+                              exc=exc, logger=self._logger)
             return
         self._render_results(self._summary_text(profiles))
 
@@ -572,8 +573,9 @@ class DimensionWindow(forms.WPFWindow):
             dimensioning_engine.place_dimensions(
                 self.doc, self.view, self.records, profiles)
         except Exception as exc:
-            forms.alert("Dimension placement failed: {0}".format(exc),
-                        exitscript=False)
+            errors.show_error("auto_dimension",
+                              "Couldn't place dimensions in the active view.",
+                              exc=exc, logger=self._logger)
             return
         self._render_results(self._summary_text(profiles))
 
@@ -588,8 +590,9 @@ class DimensionWindow(forms.WPFWindow):
                 self.records, self.view.Name,
                 self.scan_options, profiles, path)
         except Exception as exc:
-            forms.alert("Could not write report: {0}".format(exc),
-                        exitscript=False)
+            errors.show_error("auto_dimension",
+                              "Couldn't write the HTML report.",
+                              exc=exc, logger=self._logger)
             return
         try:
             os.startfile(path)
@@ -608,8 +611,9 @@ class DimensionWindow(forms.WPFWindow):
                 self.records, self.view.Name,
                 self.scan_options, profiles, path)
         except Exception as exc:
-            forms.alert("Could not write CSV: {0}".format(exc),
-                        exitscript=False)
+            errors.show_error("auto_dimension",
+                              "Couldn't write the CSV report.",
+                              exc=exc, logger=self._logger)
             return
         try:
             os.startfile(path)
