@@ -16,6 +16,7 @@ import os
 from pyrevit import revit, script
 
 from audit_engine import runner
+from bim_core import errors
 
 
 def main():
@@ -34,7 +35,13 @@ def main():
         return
 
     output.print_md("# Running Health Audit...")
-    report_path, findings = runner.run_health_audit(doc, output=output)
+    try:
+        report_path, findings = runner.run_health_audit(doc, output=output)
+    except Exception as exc:
+        errors.show_error("health_audit",
+                          "Couldn't complete the health audit.",
+                          exc=exc)
+        return
     output.print_md("---")
     output.print_md(
         "Report written to: [{0}]({0})".format(report_path))
