@@ -1,0 +1,24 @@
+{
+  "scan": {
+    "default_discipline_key": "mechanical"
+  },
+  "profiles": [
+    {
+      "discipline":               "mechanical",
+      "binding":                  "duct",
+      "enabled":                  true,
+      "min_length_mm":            1500.0,
+      "max_length_mm":            null,
+      "horizontal_only":          true,
+      "vertical_only":            false,
+      "orientation_tol_deg":      15.0,
+      "current_view_only":        true,
+      "skip_already_dimensioned": true,
+      "measurement_reference":    "centreline",
+      "reference_target":         "nearest_grid",
+      "dimension_style_id":       null,
+      "offset_distance_mm":       200.0
+    }
+  ],
+  "notes": "Auto Dimension v1 schema. 'scan' carries small global state (currently only the discipline that opens by default). 'profiles' is the per-binding dimensioning configuration: one entry per ticked subcategory. 'measurement_reference' must be one of the strategy_keys that applies to the profile's category - centreline / outside_face / outside_edge / inside_face / inside_edge / top / bottom / invert_level (varies per category, see measurement_strategies/__init__.REGISTRY). 'reference_target' is currently only 'nearest_grid' in v1. 'current_view_only' must stay true in v1 - multi-view dispatch is on the v2 list. Override per project at <project>/.bim/auto_dimension.json."
+}

@@ -1,0 +1,4 @@
+title: "Regenerate\nPack"
+tooltip: "Skip Navisworks and regenerate the Excel + HTML summary + snapshot from an existing ClashDetective XML report. Useful for recovering from a partial run or re-rendering after a config change."
+author: "Kinetic BIM"
+

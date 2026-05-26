@@ -1,0 +1,7 @@
+title: Sheet
+       Renumber
+tooltip: Renumber existing sheets in bulk from an Excel (.xlsx) or .csv file.
+  Row 1 is the header row; required columns are Number (current sheet
+  number, used to find the sheet) and New Number (target). Swaps and
+  chains are handled via a temporary-number pass.
+author: Alex Jenner

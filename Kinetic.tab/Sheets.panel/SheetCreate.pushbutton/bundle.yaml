@@ -1,0 +1,6 @@
+title: Sheet
+       Create
+tooltip: Create sheets in bulk from an Excel (.xlsx) or .csv file. Row 1 is
+  the header row; required columns are Number, Name, Titleblock
+  (aliases recognised).
+author: Alex Jenner

@@ -1,0 +1,6 @@
+title: Sheet
+       Rename
+tooltip: Rename existing sheets in bulk from an Excel (.xlsx) or .csv file.
+  Row 1 is the header row; required columns are Number (existing sheet
+  number, used to find the sheet) and Name (new name).
+author: Alex Jenner

@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "project_number": "00000",
+  "project_name": "Example - rename this file to <project_number>.json",
+  "nwf_path": "C:/Projects/Example/Coordination/Federated.nwf",
+  "output_root": "C:/Projects/Example/Coordination",
+  "clash_test_groups": [
+    {
+      "name": "Mechanical vs Structure",
+      "tests": [
+        "MEC_Ducts vs STR_Beams",
+        "MEC_Equipment vs STR_Columns"
+      ]
+    },
+    {
+      "name": "Electrical vs Ceiling",
+      "tests": [
+        "ELE_CableTray vs ARC_Ceiling"
+      ]
+    },
+    {
+      "name": "Hydraulic vs Mechanical",
+      "tests": [
+        "HYD_Pipes vs MEC_Ducts"
+      ]
+    },
+    {
+      "name": "Fire vs Structure",
+      "tests": [
+        "FIR_Sprinklers vs STR_Beams"
+      ]
+    }
+  ],
+  "options": {
+    "screenshot_resolution": [1920, 1080],
+    "export_viewpoints": true,
+    "export_screenshots": true,
+    "include_pdf_summary": true,
+    "include_excel_report": true,
+    "save_weekly_snapshot": true,
+    "refresh_models_before_run": true
+  }
+}

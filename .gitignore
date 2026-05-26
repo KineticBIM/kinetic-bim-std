@@ -1,0 +1,7 @@
+# Python bytecode caches. pyRevit (CPython engine) regenerates these
+# on every Revit launch with per-machine byte content, so tracking
+# them caused merge conflicts between team members on every pull.
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

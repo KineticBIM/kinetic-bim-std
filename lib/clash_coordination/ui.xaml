@@ -1,0 +1,284 @@
+<Window
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Kinetic Clash Coordination"
+    Height="720" Width="900"
+    ResizeMode="CanResize"
+    WindowStartupLocation="CenterScreen"
+    Background="#F5F6F8"
+    FontFamily="Segoe UI"
+    FontSize="12">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="Navy" Color="#1F3A5F"/>
+        <SolidColorBrush x:Key="Grey" Color="#7F8C8D"/>
+        <SolidColorBrush x:Key="LineGrey" Color="#D0D4D8"/>
+
+        <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="{StaticResource Navy}"/>
+            <Setter Property="Margin" Value="0,8,0,4"/>
+        </Style>
+
+        <Style x:Key="HintLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource Grey}"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+
+        <Style x:Key="PrimaryButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource Navy}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Padding" Value="18,6"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="6,0,0,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"
+                                              Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#274C7C"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#B0B8C2"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SecondaryButton" TargetType="Button">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="Foreground" Value="{StaticResource Navy}"/>
+            <Setter Property="Padding" Value="14,6"/>
+            <Setter Property="BorderBrush" Value="{StaticResource LineGrey}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Margin" Value="6,0,0,0"/>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="BorderBrush" Value="{StaticResource LineGrey}"/>
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Height" Value="26"/>
+        </Style>
+
+        <Style TargetType="ComboBox">
+            <Setter Property="Height" Value="26"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="CheckBox">
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,3,0,3"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- header -->
+            <RowDefinition Height="Auto"/>   <!-- project picker -->
+            <RowDefinition Height="Auto"/>   <!-- NWF path -->
+            <RowDefinition Height="Auto"/>   <!-- output root -->
+            <RowDefinition Height="*"/>      <!-- middle: tests + options -->
+            <RowDefinition Height="Auto"/>   <!-- progress -->
+            <RowDefinition Height="Auto"/>   <!-- buttons -->
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Margin="0,0,0,12">
+            <TextBlock Text="Clash Coordination"
+                       FontSize="20" FontWeight="Bold"
+                       Foreground="{StaticResource Navy}"/>
+            <TextBlock Text="Weekly Navisworks clash reporting workflow"
+                       Style="{StaticResource HintLabel}"/>
+        </StackPanel>
+
+        <!-- Project profile -->
+        <Grid Grid.Row="1" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="130"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Project profile" VerticalAlignment="Center"/>
+            <ComboBox Grid.Column="1" x:Name="ProfileComboBox"
+                      DisplayMemberPath="Display"
+                      SelectionChanged="OnProfileChanged"/>
+            <Button Grid.Column="2" Content="Reload"
+                    Style="{StaticResource SecondaryButton}"
+                    Click="OnReloadProfilesClicked"/>
+        </Grid>
+
+        <!-- NWF path -->
+        <Grid Grid.Row="2" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="130"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Federated NWF" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" x:Name="NwfPathBox"/>
+            <Button Grid.Column="2" Content="Browse..."
+                    Style="{StaticResource SecondaryButton}"
+                    Click="OnBrowseNwfClicked"/>
+        </Grid>
+
+        <!-- Output root -->
+        <Grid Grid.Row="3" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="130"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Output folder" VerticalAlignment="Center"/>
+            <TextBox Grid.Column="1" x:Name="OutputRootBox"/>
+            <Button Grid.Column="2" Content="Browse..."
+                    Style="{StaticResource SecondaryButton}"
+                    Click="OnBrowseOutputClicked"/>
+        </Grid>
+
+        <!-- Middle: tests + options -->
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="2*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Clash tests -->
+            <Border Grid.Column="0" BorderBrush="{StaticResource LineGrey}"
+                    BorderThickness="1" Background="White" Margin="0,0,8,0"
+                    Padding="0">
+                <DockPanel LastChildFill="True">
+                    <Grid DockPanel.Dock="Top" Background="#EEF1F5" Height="36">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Clash tests"
+                                   VerticalAlignment="Center" Margin="12,0"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource Navy}"/>
+                        <Button Grid.Column="1" Content="Select all"
+                                Style="{StaticResource SecondaryButton}"
+                                Margin="0,4,4,4"
+                                Click="OnSelectAllTestsClicked"/>
+                        <Button Grid.Column="2" Content="Select none"
+                                Style="{StaticResource SecondaryButton}"
+                                Margin="0,4,8,4"
+                                Click="OnSelectNoTestsClicked"/>
+                    </Grid>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl x:Name="TestGroupsControl" Margin="12,8">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,4,0,8">
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource Navy}"
+                                                   Margin="0,0,0,4"/>
+                                        <ItemsControl ItemsSource="{Binding Tests}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox
+                                                        Content="{Binding Name}"
+                                                        IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                                        Margin="12,1,0,1"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <!-- Options -->
+            <Border Grid.Column="1" BorderBrush="{StaticResource LineGrey}"
+                    BorderThickness="1" Background="White" Padding="0">
+                <DockPanel LastChildFill="True">
+                    <Grid DockPanel.Dock="Top" Background="#EEF1F5" Height="36">
+                        <TextBlock Text="Weekly run options"
+                                   VerticalAlignment="Center"
+                                   Margin="12,0" FontWeight="SemiBold"
+                                   Foreground="{StaticResource Navy}"/>
+                    </Grid>
+                    <StackPanel Margin="14,10">
+                        <CheckBox x:Name="OptRefresh"          Content="Refresh coordination models" IsChecked="True"/>
+                        <CheckBox x:Name="OptRunTests"         Content="Run clash tests" IsChecked="True"/>
+                        <CheckBox x:Name="OptExcel"            Content="Export Excel report" IsChecked="True"/>
+                        <CheckBox x:Name="OptPdf"              Content="Export PDF summary" IsChecked="True"/>
+                        <CheckBox x:Name="OptViewpoints"       Content="Export viewpoints" IsChecked="True"/>
+                        <CheckBox x:Name="OptScreenshots"      Content="Export screenshots" IsChecked="True"/>
+                        <CheckBox x:Name="OptSnapshot"         Content="Save weekly snapshot" IsChecked="True"/>
+                        <CheckBox x:Name="OptPdfThumbs"        Content="Embed thumbnails in PDF" IsChecked="True"/>
+                        <Separator Margin="0,8"/>
+                        <CheckBox x:Name="OptFailOnMissing"    Content="Fail run if linked models are missing" IsChecked="False"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+        </Grid>
+
+        <!-- Progress -->
+        <Grid Grid.Row="5" Margin="0,12,0,4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Grid.Column="0"
+                       x:Name="StatusText"
+                       Text="Ready."
+                       Style="{StaticResource HintLabel}"/>
+            <TextBlock Grid.Row="0" Grid.Column="1"
+                       x:Name="StatusPercent"
+                       Style="{StaticResource HintLabel}"/>
+            <ProgressBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                         x:Name="ProgressBar"
+                         Height="6" Minimum="0" Maximum="1" Value="0"
+                         Margin="0,4,0,0"/>
+        </Grid>
+
+        <!-- Footer buttons -->
+        <Grid Grid.Row="6" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0" Content="Open output folder"
+                    Style="{StaticResource SecondaryButton}"
+                    Click="OnOpenOutputClicked"/>
+            <Button Grid.Column="2" Content="Save profile override"
+                    Style="{StaticResource SecondaryButton}"
+                    Click="OnSaveProfileClicked"/>
+            <Button Grid.Column="3" Content="Close"
+                    Style="{StaticResource SecondaryButton}"
+                    Click="OnCloseClicked"/>
+            <Button Grid.Column="4" Content="Run"
+                    Style="{StaticResource PrimaryButton}"
+                    x:Name="RunButton"
+                    Click="OnRunClicked"/>
+        </Grid>
+    </Grid>
+</Window>

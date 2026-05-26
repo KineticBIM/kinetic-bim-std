@@ -1,0 +1,27 @@
+{
+  "scan": {
+    "whole_model":            false,
+    "default_discipline_key": "mechanical"
+  },
+  "profiles": [
+    {
+      "discipline":          "mechanical",
+      "binding":             "duct",
+      "enabled":             true,
+      "min_length_mm":       1500.0,
+      "max_length_mm":       null,
+      "horizontal_only":     false,
+      "vertical_only":       false,
+      "orientation_tol_deg": 15.0,
+      "size_filters":        {"width_mm_min":  null, "width_mm_max":  null,
+                              "height_mm_min": null, "height_mm_max": null},
+      "skip_already_tagged": true,
+      "add_leader":          false,
+      "tag_symbol_id":       null,
+      "placement_mode":      "adjacent",
+      "offset_mm":           300.0,
+      "preferred_side":      "auto"
+    }
+  ],
+  "notes": "v6 schema: 'scan' carries the small set of values that live above any single profile (currently scope + which discipline opens by default). 'profiles' is the per-binding tagging configuration: one entry per ticked subcategory. 'discipline' + 'binding' must match keys in core/discipline_config.DISCIPLINE_REGISTRY. Filter values that don't apply to the binding's category (e.g. 'min_length_mm' on Equipment) are ignored at engine time - the rules engine gates each rule by category capability, so storing the field is harmless. v6 adds 'placement_mode' ('adjacent' offsets the tag away from the element by 'offset_mm' on the 'preferred_side' so it sits beside the host rather than on top, with clash avoidance handled by the engine; 'on_element' falls back to pre-v6 behaviour of placing tags at curve midpoint / location point - useful for categories where adjacent placement reads as visually disconnected). 'preferred_side' is one of 'auto', 'above', 'below', 'left', 'right'. Legacy v3/v4/v5 configs are auto-migrated: missing placement_mode defaults to 'adjacent', missing offset_mm defaults to 300, missing preferred_side defaults to 'auto' - so old project files inherit the new v6 placement behaviour at the next scan without manual edits. Set placement_mode to 'on_element' explicitly to preserve the old behaviour on a per-profile basis."
+}

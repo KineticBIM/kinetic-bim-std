@@ -1,0 +1,14 @@
+{
+    "_comment": "Default QA config. Copy to <project>/.bim/qa_config.json and edit per project. Any key may be omitted. NOTE: view_name_pattern and required_worksets are deliberately NOT set here — add them to the per-project config once the BEP defines the naming convention and workset list. Setting office-wide defaults for those produced thousands of false positives.",
+
+    "max_warnings": 100,
+
+    "required_project_info": [
+        "project_number",
+        "project_name",
+        "client_name"
+    ],
+
+    "forbid_cad_imports": true,
+    "require_links_pinned": true
+}

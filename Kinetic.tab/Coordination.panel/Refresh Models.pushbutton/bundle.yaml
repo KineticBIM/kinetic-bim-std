@@ -1,0 +1,4 @@
+title: "Refresh\nModels"
+tooltip: "Open the federated NWF in Navisworks, refresh all linked NWC/NWD references, and log the result. Use as a pre-flight check before a full coordination run."
+author: "Kinetic BIM"
+

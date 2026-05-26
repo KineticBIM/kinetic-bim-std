@@ -1,0 +1,366 @@
+<Window
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Auto Tag - Annotation QA"
+    Width="1400" Height="900"
+    WindowStartupLocation="CenterScreen"
+    ResizeMode="CanResize">
+
+    <!-- ====================================================================
+         Per-column CellStyle resources. Each gated column sets IsEnabled
+         on the DataGridCell based on a row-level Supports{X} flag. When
+         the cell is disabled WPF greys the text automatically and blocks
+         edit-mode entry. We also set Background for a soft visual cue
+         so the column lines up across the table even when half the rows
+         have it greyed.
+         ==================================================================== -->
+    <Window.Resources>
+
+        <Style x:Key="GatedCell_MinLength" TargetType="DataGridCell">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsMinLength}" Value="False">
+                    <Setter Property="IsEnabled" Value="False"/>
+                    <Setter Property="Background" Value="#F4F4F4"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="GatedCell_MaxLength" TargetType="DataGridCell">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsMaxLength}" Value="False">
+                    <Setter Property="IsEnabled" Value="False"/>
+                    <Setter Property="Background" Value="#F4F4F4"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="GatedCell_Horizontal" TargetType="DataGridCell">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsHorizontal}" Value="False">
+                    <Setter Property="IsEnabled" Value="False"/>
+                    <Setter Property="Background" Value="#F4F4F4"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="GatedCell_Vertical" TargetType="DataGridCell">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsVertical}" Value="False">
+                    <Setter Property="IsEnabled" Value="False"/>
+                    <Setter Property="Background" Value="#F4F4F4"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="GatedCell_OrientationTol" TargetType="DataGridCell">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsOrientationTol}" Value="False">
+                    <Setter Property="IsEnabled" Value="False"/>
+                    <Setter Property="Background" Value="#F4F4F4"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="GatedCell_Width" TargetType="DataGridCell">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsWidth}" Value="False">
+                    <Setter Property="IsEnabled" Value="False"/>
+                    <Setter Property="Background" Value="#F4F4F4"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="GatedCell_Height" TargetType="DataGridCell">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsHeight}" Value="False">
+                    <Setter Property="IsEnabled" Value="False"/>
+                    <Setter Property="Background" Value="#F4F4F4"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="GatedCell_Diameter" TargetType="DataGridCell">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding SupportsDiameter}" Value="False">
+                    <Setter Property="IsEnabled" Value="False"/>
+                    <Setter Property="Background" Value="#F4F4F4"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- v6 placement gating. IsAdjacent is dynamic - the ProfileRow
+             fires INotifyPropertyChanged when SelectedPlacementOption
+             changes so these triggers re-evaluate live. -->
+
+        <Style x:Key="GatedCell_PlacementOffset" TargetType="DataGridCell">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsAdjacent}" Value="False">
+                    <Setter Property="IsEnabled" Value="False"/>
+                    <Setter Property="Background" Value="#F4F4F4"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="GatedCell_PlacementSide" TargetType="DataGridCell">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsAdjacent}" Value="False">
+                    <Setter Property="IsEnabled" Value="False"/>
+                    <Setter Property="Background" Value="#F4F4F4"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Lead cell: greyed (not removed) when adjacent because the
+             engine forces leader on regardless of the stored value.
+             The checkbox itself reads True via the ProfileRow.AddLeader
+             getter override; this just blocks edits so the user can't
+             try to untick it. -->
+        <Style x:Key="GatedCell_AddLeader" TargetType="DataGridCell">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsAdjacent}" Value="True">
+                    <Setter Property="IsEnabled" Value="False"/>
+                    <Setter Property="Background" Value="#F4F4F4"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+    </Window.Resources>
+
+    <Grid Margin="14">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- =============================================================
+             ROW 0: Discipline + multi-select subcategory list.
+             ============================================================= -->
+        <GroupBox Grid.Row="0" Header="Discipline and subcategories"
+                  Padding="8" Margin="0,0,0,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="220"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                    <Label Content="Discipline"/>
+                    <ComboBox x:Name="discipline_combo" Margin="0,3"
+                              SelectionChanged="discipline_changed"/>
+                    <TextBlock Margin="0,12,0,0" FontStyle="Italic"
+                               Foreground="#666" TextWrapping="Wrap"
+                               Text="Pick a discipline, tick subcategories. Each ticked subcategory becomes a row in the grid below with its own filters and tag family."/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1">
+                    <Label Content="Subcategories"/>
+                    <ListBox x:Name="subcategory_list"
+                             SelectionMode="Multiple"
+                             Height="120"
+                             SelectionChanged="subcategories_changed"/>
+                </StackPanel>
+            </Grid>
+        </GroupBox>
+
+        <!-- =============================================================
+             ROW 1: Per-profile configuration grid. One row per ticked
+             binding. Cells that don't apply to a row's category render
+             disabled (column stays for cross-row visual alignment).
+             ============================================================= -->
+        <GroupBox Grid.Row="1" Header="Tagging profiles (one row per ticked subcategory)"
+                  Padding="6" Margin="0,0,0,8">
+            <DataGrid x:Name="profile_grid"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserReorderColumns="False"
+                      CanUserResizeRows="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      RowHeight="28"
+                      AlternatingRowBackground="#FAFAFA"
+                      SelectionMode="Single"
+                      SelectionUnit="Cell"
+                      CellEditEnding="grid_cell_edited">
+                <DataGrid.Columns>
+
+                    <!-- Common, always-active columns -->
+                    <DataGridCheckBoxColumn Header="On"
+                                            Binding="{Binding Enabled, UpdateSourceTrigger=PropertyChanged}"
+                                            Width="38"/>
+
+                    <DataGridTextColumn Header="Discipline"
+                                        Binding="{Binding DisciplineLabel}"
+                                        IsReadOnly="True"
+                                        Width="100"/>
+
+                    <DataGridTextColumn Header="Subcategory"
+                                        Binding="{Binding SubcategoryLabel}"
+                                        IsReadOnly="True"
+                                        Width="160"/>
+
+                    <!-- Length filters (linear MEP only) -->
+                    <DataGridTextColumn Header="Min Len mm"
+                                        Binding="{Binding MinLengthText, UpdateSourceTrigger=LostFocus}"
+                                        Width="90"
+                                        CellStyle="{StaticResource GatedCell_MinLength}"/>
+
+                    <DataGridTextColumn Header="Max Len mm"
+                                        Binding="{Binding MaxLengthText, UpdateSourceTrigger=LostFocus}"
+                                        Width="90"
+                                        CellStyle="{StaticResource GatedCell_MaxLength}"/>
+
+                    <!-- Orientation -->
+                    <DataGridCheckBoxColumn Header="Horiz"
+                                            Binding="{Binding HorizontalOnly, UpdateSourceTrigger=PropertyChanged}"
+                                            Width="44"
+                                            CellStyle="{StaticResource GatedCell_Horizontal}"/>
+                    <DataGridCheckBoxColumn Header="Vert"
+                                            Binding="{Binding VerticalOnly, UpdateSourceTrigger=PropertyChanged}"
+                                            Width="44"
+                                            CellStyle="{StaticResource GatedCell_Vertical}"/>
+                    <DataGridTextColumn Header="Tol &#176;"
+                                        Binding="{Binding OrientationTolText, UpdateSourceTrigger=LostFocus}"
+                                        Width="50"
+                                        CellStyle="{StaticResource GatedCell_OrientationTol}"/>
+
+                    <!-- Size dimensions -->
+                    <DataGridTextColumn Header="W min"
+                                        Binding="{Binding WidthMinText, UpdateSourceTrigger=LostFocus}"
+                                        Width="60"
+                                        CellStyle="{StaticResource GatedCell_Width}"/>
+                    <DataGridTextColumn Header="W max"
+                                        Binding="{Binding WidthMaxText, UpdateSourceTrigger=LostFocus}"
+                                        Width="60"
+                                        CellStyle="{StaticResource GatedCell_Width}"/>
+                    <DataGridTextColumn Header="H min"
+                                        Binding="{Binding HeightMinText, UpdateSourceTrigger=LostFocus}"
+                                        Width="60"
+                                        CellStyle="{StaticResource GatedCell_Height}"/>
+                    <DataGridTextColumn Header="H max"
+                                        Binding="{Binding HeightMaxText, UpdateSourceTrigger=LostFocus}"
+                                        Width="60"
+                                        CellStyle="{StaticResource GatedCell_Height}"/>
+                    <DataGridTextColumn Header="Dia min"
+                                        Binding="{Binding DiameterMinText, UpdateSourceTrigger=LostFocus}"
+                                        Width="60"
+                                        CellStyle="{StaticResource GatedCell_Diameter}"/>
+                    <DataGridTextColumn Header="Dia max"
+                                        Binding="{Binding DiameterMaxText, UpdateSourceTrigger=LostFocus}"
+                                        Width="60"
+                                        CellStyle="{StaticResource GatedCell_Diameter}"/>
+
+                    <!-- Tag family - per-row ComboBox -->
+                    <DataGridTemplateColumn Header="Tag family / type"
+                                            Width="*"
+                                            MinWidth="200">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ComboBox ItemsSource="{Binding TagSymbolOptions}"
+                                          DisplayMemberPath="Display"
+                                          SelectedItem="{Binding SelectedTagSymbolOption,
+                                                                 UpdateSourceTrigger=PropertyChanged,
+                                                                 Mode=TwoWay}"
+                                          Margin="0"
+                                          BorderThickness="0"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <!-- v6 placement: mode + offset + side, plus gated Lead -->
+                    <DataGridTemplateColumn Header="Placement" Width="100">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ComboBox ItemsSource="{Binding PlacementModeOptions}"
+                                          DisplayMemberPath="Display"
+                                          SelectedItem="{Binding SelectedPlacementOption,
+                                                                 UpdateSourceTrigger=PropertyChanged,
+                                                                 Mode=TwoWay}"
+                                          Margin="0"
+                                          BorderThickness="0"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="Offset mm"
+                                        Binding="{Binding OffsetMmText, UpdateSourceTrigger=LostFocus}"
+                                        Width="70"
+                                        CellStyle="{StaticResource GatedCell_PlacementOffset}"/>
+
+                    <DataGridTemplateColumn Header="Side" Width="80"
+                                            CellStyle="{StaticResource GatedCell_PlacementSide}">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ComboBox ItemsSource="{Binding PreferredSideOptions}"
+                                          DisplayMemberPath="Display"
+                                          SelectedItem="{Binding SelectedPreferredSideOption,
+                                                                 UpdateSourceTrigger=PropertyChanged,
+                                                                 Mode=TwoWay}"
+                                          Margin="0"
+                                          BorderThickness="0"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridCheckBoxColumn Header="Lead"
+                                            Binding="{Binding AddLeader, UpdateSourceTrigger=PropertyChanged}"
+                                            Width="44"
+                                            CellStyle="{StaticResource GatedCell_AddLeader}"/>
+
+                    <DataGridCheckBoxColumn Header="Skip"
+                                            Binding="{Binding SkipAlreadyTagged, UpdateSourceTrigger=PropertyChanged}"
+                                            Width="44"/>
+
+                </DataGrid.Columns>
+            </DataGrid>
+        </GroupBox>
+
+        <!-- =============================================================
+             ROW 2: Scope (whole-model toggle stays a global flag - one
+             scope per scan).
+             ============================================================= -->
+        <GroupBox Grid.Row="2" Header="Scope" Padding="8" Margin="0,0,0,8">
+            <CheckBox x:Name="whole_model_chk"
+                      Content="Scan whole model (tags still placed in active view only)"
+                      Checked="scope_changed" Unchecked="scope_changed"
+                      Margin="0,2"/>
+        </GroupBox>
+
+        <!-- =============================================================
+             ROW 3: Results console.
+             ============================================================= -->
+        <GroupBox Grid.Row="3" Header="Results" Margin="0,0,0,8" Height="240">
+            <TextBox x:Name="results_box"
+                     IsReadOnly="True"
+                     FontFamily="Consolas"
+                     FontSize="12"
+                     VerticalScrollBarVisibility="Auto"
+                     HorizontalScrollBarVisibility="Auto"
+                     AcceptsReturn="True"
+                     TextWrapping="NoWrap"/>
+        </GroupBox>
+
+        <!-- =============================================================
+             ROW 4: Action buttons.
+             ============================================================= -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Margin="0,8,0,0">
+            <Button Content="Scan Model" Width="130" Height="30" Margin="4,0"
+                    Click="scan_clicked"/>
+            <Button Content="Place Tags" Width="130" Height="30" Margin="4,0"
+                    Click="place_clicked"/>
+            <Button Content="Delete Existing Tags" Width="170" Height="30" Margin="4,0"
+                    Click="delete_existing_clicked"
+                    Background="#FFF0E0E0"/>
+            <Button Content="Save Report" Width="130" Height="30" Margin="4,0"
+                    Click="report_clicked"/>
+            <Button Content="Save Excel" Width="130" Height="30" Margin="4,0"
+                    Click="csv_clicked"/>
+            <Button Content="Close" Width="80" Height="30" Margin="12,0,0,0"
+                    Click="close_clicked"/>
+        </StackPanel>
+    </Grid>
+</Window>

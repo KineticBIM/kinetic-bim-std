@@ -1,0 +1,70 @@
+{
+  "schema_version": "1.0",
+  "project_number": null,
+  "project_name": "Platform default",
+  "nwf_path": null,
+  "output_root": null,
+  "clash_test_groups": [
+    {
+      "name": "Mechanical vs Structure",
+      "tests": []
+    },
+    {
+      "name": "Electrical vs Structure",
+      "tests": []
+    },
+    {
+      "name": "Hydraulic vs Mechanical",
+      "tests": []
+    },
+    {
+      "name": "Fire vs Structure",
+      "tests": []
+    },
+    {
+      "name": "Electrical vs Ceiling",
+      "tests": []
+    }
+  ],
+  "disciplines": {
+    "MEC": "Mechanical",
+    "ELE": "Electrical",
+    "HYD": "Hydraulic",
+    "FIR": "Fire",
+    "STR": "Structure",
+    "ARC": "Architecture",
+    "CIV": "Civil"
+  },
+  "discipline_keywords": {
+    "MEC": ["mech", "mechanical", "duct", "vav", "ahu", "hvac"],
+    "ELE": ["elec", "electrical", "cable tray", "conduit", "lighting", "power"],
+    "HYD": ["hyd", "hydraulic", "plumbing", "pipe", "sanitary", "water"],
+    "FIR": ["fire", "sprinkler", "fps", "fp", "firewater"],
+    "STR": ["str", "structure", "beam", "column", "slab", "structural"],
+    "ARC": ["arc", "architecture", "wall", "ceiling", "floor", "door", "window"],
+    "CIV": ["civ", "civil", "drainage", "earthworks"]
+  },
+  "naming": {
+    "report_excel": "ClashReport_{date}.xlsx",
+    "report_pdf": "ClashSummary_{date}.pdf",
+    "snapshot_json": "weekly_snapshot.json",
+    "log_file": "coordination_{date}_{time}.log",
+    "screenshot": "{test}__{clash_id}.png",
+    "viewpoint_file": "{test}__{clash_id}.xml"
+  },
+  "options": {
+    "screenshot_resolution": [1920, 1080],
+    "export_viewpoints": true,
+    "export_screenshots": true,
+    "include_pdf_summary": true,
+    "include_excel_report": true,
+    "save_weekly_snapshot": true,
+    "refresh_models_before_run": true,
+    "fail_on_missing_models": false
+  },
+  "status_buckets": {
+    "active": ["new", "active"],
+    "resolved": ["resolved", "approved"],
+    "ignored": ["reviewed"]
+  }
+}
