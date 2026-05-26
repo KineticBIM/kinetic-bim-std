@@ -9,7 +9,7 @@ Shift-click: open the report folder instead of running.
 """
 
 __title__   = "Health\nAudit"
-__author__  = "BIM Manager"
+__author__  = "Kinetic BIM"
 __doc__     = "Run a model health audit and produce an HTML report."
 
 import os

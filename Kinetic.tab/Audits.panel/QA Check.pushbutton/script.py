@@ -9,7 +9,7 @@ Shift-click: open the QA config file for editing.
 """
 
 __title__   = "QA\nCheck"
-__author__  = "BIM Manager"
+__author__  = "Kinetic BIM"
 __doc__     = "Run a project-specific QA compliance check."
 
 import os

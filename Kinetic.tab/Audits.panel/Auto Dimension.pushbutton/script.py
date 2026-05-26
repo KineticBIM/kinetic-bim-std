@@ -19,7 +19,7 @@ from dimension_qa.ui import DimensionWindow
 
 
 __title__  = "Auto\nDimension"
-__author__ = "BIM Manager"
+__author__ = "Kinetic BIM"
 __doc__    = "Rule-based dimensioning for linear MEP runs to the nearest grid."
 
 

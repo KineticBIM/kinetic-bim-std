@@ -20,7 +20,7 @@ from bim_core import log as log_module
 
 
 __title__  = "Auto\nTag"
-__author__ = "BIM Manager"
+__author__ = "Kinetic BIM"
 __doc__    = "Find and tag untagged linear MEP runs in the active view or across the whole model."
 
 
