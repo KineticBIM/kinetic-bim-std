@@ -11,6 +11,7 @@ name will be set on the new sheet (best-effort, skipped if not found).
 """
 
 from pyrevit import revit, DB, forms, script
+from bim_core import errors
 from sheet_tools.excel_reader import read_sheet, normalise
 
 ALIASES = {
@@ -85,7 +86,10 @@ def main():
     try:
         headers, rows = read_sheet(sheet_path)
     except Exception as exc:
-        forms.alert("Could not read sheet file: {}".format(exc), exitscript=True)
+        errors.show_error("sheet_create",
+                          "Couldn't read the sheet list file.",
+                          exc=exc)
+        return
 
     if not rows:
         forms.alert("No data rows found in {}.".format(sheet_path), exitscript=True)
