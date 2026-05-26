@@ -38,7 +38,7 @@ from annotation_qa import (
     rules,
     tagging_engine,
 )
-from bim_core import log as log_module
+from bim_core import errors, log as log_module
 from bim_core.core import discipline_config
 
 
@@ -696,8 +696,9 @@ class AnnotationQAWindow(forms.WPFWindow):
             self.records = qa_engine.scan(
                 self.doc, self.view, profiles, whole_model=whole_model)
         except Exception as exc:
-            log_module.get_logger(self.doc, tool_name="auto_tag").exception("Scan failed")
-            forms.alert("Scan failed: {0}".format(exc), exitscript=False)
+            errors.show_error("auto_tag",
+                              "Couldn't scan the model for tag candidates.",
+                              exc=exc, logger=self._logger)
             return
         self._render_results(self._summary_text(profiles))
 
@@ -724,7 +725,9 @@ class AnnotationQAWindow(forms.WPFWindow):
                 self.doc, self.view, self.records, profiles,
                 scan_options=self.scan_options)
         except Exception as exc:
-            forms.alert("Tag placement failed: {0}".format(exc), exitscript=False)
+            errors.show_error("auto_tag",
+                              "Couldn't place tags in the active view.",
+                              exc=exc, logger=self._logger)
             return
         self._render_results(self._summary_text(profiles))
 
@@ -739,8 +742,9 @@ class AnnotationQAWindow(forms.WPFWindow):
                 self.records, self.view.Name,
                 self.scan_options, profiles, path)
         except Exception as exc:
-            forms.alert("Could not write report: {0}".format(exc),
-                        exitscript=False)
+            errors.show_error("auto_tag",
+                              "Couldn't write the HTML report.",
+                              exc=exc, logger=self._logger)
             return
         try:
             os.startfile(path)
@@ -763,8 +767,9 @@ class AnnotationQAWindow(forms.WPFWindow):
                 self.records, self.view.Name,
                 self.scan_options, profiles, path)
         except Exception as exc:
-            forms.alert("Could not write CSV: {0}".format(exc),
-                        exitscript=False)
+            errors.show_error("auto_tag",
+                              "Couldn't write the CSV report.",
+                              exc=exc, logger=self._logger)
             return
         try:
             os.startfile(path)
@@ -824,9 +829,9 @@ class AnnotationQAWindow(forms.WPFWindow):
         except Exception as exc:
             if t.HasStarted() and not t.HasEnded():
                 t.RollBack()
-            self._logger.exception("Delete existing tags failed")
-            forms.alert("Could not delete tags: {0}".format(exc),
-                        exitscript=False)
+            errors.show_error("auto_tag",
+                              "Couldn't delete existing tags.",
+                              exc=exc, logger=self._logger)
             return
 
         self._logger.info(

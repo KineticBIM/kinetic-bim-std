@@ -12,6 +12,7 @@ What lives here:
                          system classification, family name pattern).
     element_filters.py   per-category element collection.
     log.py               per-project file logger.
+    errors.py            friendly error dialog + traceback logging.
 
 Tool-specific code (Auto Tag's NotAlreadyTaggedRule + tagging engine,
 Auto Dimension's AlreadyDimensionedRule + dimensioning engine, etc.)
