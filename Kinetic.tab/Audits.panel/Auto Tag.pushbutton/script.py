@@ -16,7 +16,7 @@ import os
 from pyrevit import revit, forms
 
 from annotation_qa.ui import AnnotationQAWindow
-from bim_core import log as log_module
+from bim_core import errors, log as log_module
 
 
 __title__  = "Auto\nTag"
@@ -31,23 +31,35 @@ def _open_project_config(doc):
     proj_cfg_dir = os.path.join(os.path.dirname(pn), ".bim")
     proj_cfg = os.path.join(proj_cfg_dir, "auto_tag.json")
     if not os.path.isfile(proj_cfg):
-        if not os.path.isdir(proj_cfg_dir):
-            os.makedirs(proj_cfg_dir)
-        here = os.path.dirname(os.path.abspath(__file__))
-        default = os.path.normpath(os.path.join(
-            here, "..", "..", "..", "lib", "annotation_qa",
-            "configs", "default.json"))
-        src = open(default, "rb")
+        # Seed the project config from the extension default. Any
+        # failure here (corrupt install, locked-down filesystem,
+        # read-only project folder) becomes a friendly dialog instead
+        # of a pyRevit traceback.
         try:
-            data = src.read()
-        finally:
-            src.close()
-        dst = open(proj_cfg, "wb")
-        try:
-            dst.write(data)
-        finally:
-            dst.close()
-    os.startfile(proj_cfg)
+            if not os.path.isdir(proj_cfg_dir):
+                os.makedirs(proj_cfg_dir)
+            here = os.path.dirname(os.path.abspath(__file__))
+            default = os.path.normpath(os.path.join(
+                here, "..", "..", "..", "lib", "annotation_qa",
+                "configs", "default.json"))
+            with open(default, "rb") as src:
+                data = src.read()
+            with open(proj_cfg, "wb") as dst:
+                dst.write(data)
+        except Exception as exc:
+            errors.show_error(
+                "auto_tag",
+                "Couldn't create the project Auto Tag config.",
+                exc=exc,
+                exitscript=True)
+    try:
+        os.startfile(proj_cfg)
+    except Exception as exc:
+        errors.show_error(
+            "auto_tag",
+            "Couldn't open the project config. The file is at:\n"
+            "{0}".format(proj_cfg),
+            exc=exc)
 
 
 def main():
