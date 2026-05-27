@@ -33,11 +33,11 @@ from bim_core import errors, log as log_module
 from bim_core.core import discipline_config
 
 from dimension_qa import (
+    config_io,
     profiles as profile_module,
     dimensioning_engine,
     measurement_strategies,
     reporting,
-    rules,
     target_strategies,
 )
 
@@ -338,7 +338,13 @@ class DimensionWindow(forms.WPFWindow):
         self.doc = doc
         self.view = view
         self._logger = log_module.get_logger(doc, tool_name="auto_dimension")
-        self.scan_options = rules._deep_copy(rules.DEFAULT_SCAN_OPTIONS)
+        # Load scan_options + starting profiles from disk - project
+        # config wins, then extension default, then in-code defaults.
+        # config_io.load_for_doc never raises; on any failure it falls
+        # through to the in-code defaults so the dialog always opens
+        # in a usable state.
+        self.scan_options, self._initial_profiles = config_io.load_for_doc(
+            doc, logger=self._logger)
         self.rows = ObservableCollection[object]()
         self._row_cache = {}
         self.records = []
@@ -445,9 +451,29 @@ class DimensionWindow(forms.WPFWindow):
         return [b for b in bindings if b.label in labels]
 
     def _select_default_bindings(self):
-        """Tick the bindings the default profiles target, when they're
-        in the v1-supported set."""
-        starting = rules.default_profiles()
+        """Tick the bindings the loaded profiles target, when they're
+        in the v1-supported set.
+
+        self._initial_profiles is whatever config_io.load_for_doc
+        returned - project config if present, extension default
+        otherwise, in-code default as last resort. Profiles for
+        non-current disciplines are still seeded into _row_cache so
+        a later discipline switch + re-tick restores their persisted
+        values verbatim.
+        """
+        starting = self._initial_profiles
+
+        # Seed row cache for ALL loaded profiles in v1-supported
+        # categories, regardless of discipline. Cross-discipline
+        # persistence relies on this. Non-linear bindings are skipped
+        # because v1 has no working measurement strategy for them.
+        for p in starting:
+            if p.binding.category_key not in _V1_CATEGORIES:
+                continue
+            if p.key not in self._row_cache:
+                self._row_cache[p.key] = ProfileRow(
+                    p, self._dimension_style_options)
+
         target_keys = {p.binding.key for p in starting
                        if p.discipline_key == self._current_discipline_key()
                        and p.binding.category_key in _V1_CATEGORIES}
@@ -459,13 +485,6 @@ class DimensionWindow(forms.WPFWindow):
         for binding in self._current_bindings():
             if binding.key in target_keys:
                 self.subcategory_list.SelectedItems.Add(binding.label)
-
-        # Seed the row cache with the starting profiles.
-        for p in starting:
-            if p.binding.category_key not in _V1_CATEGORIES:
-                continue
-            self._row_cache[p.key] = ProfileRow(
-                p, self._dimension_style_options)
 
     # ====================================================================
     # Row sync
@@ -622,6 +641,18 @@ class DimensionWindow(forms.WPFWindow):
                         exitscript=False)
 
     def close_clicked(self, sender, args):  # noqa: ARG002
+        # Persist the current grid state to the project's
+        # auto_dimension.json so the next launch (and the rest of the
+        # team via the shared project config) sees the same scan
+        # options, measurement references, dimension styles, offsets
+        # etc. Best-effort: any failure is logged inside config_io and
+        # never blocks the close.
+        config_io.save_for_doc(
+            self.doc,
+            self.scan_options,
+            self._current_profiles(),
+            logger=self._logger,
+        )
         self.Close()
 
     # ====================================================================
