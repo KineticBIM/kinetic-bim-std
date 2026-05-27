@@ -73,6 +73,65 @@ def show_error(tool_name, summary, exc=None, logger=None, exitscript=False):
     forms.alert("\n".join(body_lines), exitscript=exitscript)
 
 
+def show_error_modal(tool_name, summary, exc=None, tb=None, logger=None):
+    """Show a modal error dialog from a WPF window context.
+
+    Sibling of show_error for tools whose UI is a WPF window rather
+    than a pyRevit pushbutton screen. forms.alert does not own a WPF
+    dialog parent, so we route through System.Windows.MessageBox to
+    get correct modality and z-order. Body composition mirrors
+    show_error: friendly summary, optional exception detail, and the
+    log path the user can hand to support.
+
+    tb: optional pre-formatted traceback string. Provide it when the
+        caller catches the exception on a worker thread and only
+        invokes the dialog later from the dispatcher thread — by then
+        sys.exc_info has cleared, so logger.exception would record an
+        empty traceback. When omitted, falls back to logger.exception
+        (correct only inside the original except block).
+    """
+    import clr  # type: ignore
+    clr.AddReference("PresentationFramework")
+    from System.Windows import (   # type: ignore  # noqa: E402
+        MessageBox, MessageBoxButton, MessageBoxImage,
+    )
+
+    title = _display_title(tool_name)
+
+    if exc is not None:
+        if logger is None and tool_name:
+            try:
+                logger = log_module.get_logger(tool_name=tool_name)
+            except Exception:
+                logger = None
+        if logger is not None:
+            try:
+                if tb:
+                    logger.error("%s: %s\n%s", summary, exc, tb)
+                else:
+                    logger.exception("%s: %s", summary, exc)
+            except Exception:
+                pass
+
+    body_lines = [summary]
+    if exc is not None:
+        exc_msg = str(exc).strip()
+        if exc_msg:
+            body_lines.append("")
+            body_lines.append("Detail: " + exc_msg)
+    log_p = log_module.log_path(tool_name) if tool_name else None
+    if log_p:
+        body_lines.append("")
+        body_lines.append("Log: " + log_p)
+
+    MessageBox.Show(
+        "\n".join(body_lines),
+        title,
+        MessageBoxButton.OK,
+        MessageBoxImage.Error,
+    )
+
+
 def _display_title(tool_name):
     """Convert 'auto_tag' -> 'Auto Tag' for dialog titles."""
     if not tool_name:

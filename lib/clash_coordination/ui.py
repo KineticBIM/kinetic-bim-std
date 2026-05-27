@@ -49,8 +49,12 @@ from System.Windows import (   # type: ignore
 
 from pyrevit import forms
 
+from bim_core import errors
 from clash_coordination import orchestrator, project_config
 from clash_coordination.output import folder_layout
+
+
+TOOL_NAME = "clash_reporting"
 
 
 XAML_FILE = os.path.join(os.path.dirname(__file__), "ui.xaml")
@@ -191,10 +195,10 @@ class CoordinationWindow(forms.WPFWindow):
                 with io.open(source_path, "r", encoding="utf-8") as fh:
                     overlay = json.loads(fh.read())
             except Exception as e:
-                MessageBox.Show(
-                    "Failed to load profile {0}: {1}".format(source_path, e),
-                    "Profile error",
-                    MessageBoxButton.OK, MessageBoxImage.Warning)
+                errors.show_error_modal(
+                    TOOL_NAME,
+                    "Couldn't load profile:\n{0}".format(source_path),
+                    exc=e)
                 self._profile, self._profile_source = project_config.load_profile(
                     doc=self._doc)
                 return
@@ -302,10 +306,10 @@ class CoordinationWindow(forms.WPFWindow):
                 "Save profile",
                 MessageBoxButton.OK, MessageBoxImage.Information)
         except Exception as e:
-            MessageBox.Show(
-                "Could not save: {0}".format(e),
-                "Save profile",
-                MessageBoxButton.OK, MessageBoxImage.Error)
+            errors.show_error_modal(
+                TOOL_NAME,
+                "Couldn't save the project override.",
+                exc=e)
 
     def OnCloseClicked(self, sender, args):
         if self._running:
@@ -409,10 +413,11 @@ class CoordinationWindow(forms.WPFWindow):
             self._running = False
             self.RunButton.IsEnabled = True
             self._set_status("Failed: {0}".format(exc), 0.0)
-            MessageBox.Show(
-                "{0}\n\n{1}".format(exc, tb),
-                "Coordination run failed",
-                MessageBoxButton.OK, MessageBoxImage.Error)
+            errors.show_error_modal(
+                TOOL_NAME,
+                "The coordination run failed.",
+                exc=exc,
+                tb=tb)
         self.Dispatcher.Invoke(Action(show))
 
     # ---- Profile-from-UI helpers ----------------------------------------
