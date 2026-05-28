@@ -20,6 +20,20 @@ unit-testable with a mock transport - under plain CPython.
 import json
 
 
+def _log_http(method, url, status, text, authed):
+    """Log a non-2xx Keygen response (endpoint + status + body) to the
+    licensing log so live failures are diagnosable. Body carries only
+    error title/detail, no secrets. Never raises."""
+    try:
+        from bim_core import log as log_module
+        snippet = (text or "")[:600]
+        log_module.get_logger(tool_name="licensing").error(
+            "keygen %s %s -> %s (authed=%s) body=%s",
+            method, url, status, authed, snippet)
+    except Exception:
+        pass
+
+
 # Keygen account id - a path param, not a secret. Sandbox account used
 # for development/testing; swap in the production account id at GA.
 _ACCOUNT_ID = "2141e382-072c-44d5-87f1-e076efb3e741"
@@ -152,6 +166,8 @@ class KeygenClient(object):
         payload = json.dumps(body) if body is not None else None
 
         status, text = self._transport_fn()(method, url, headers, payload)
+        if status < 200 or status >= 300:
+            _log_http(method, url, status, text, authed=bool(key))
         doc = None
         if text and text.strip():
             try:

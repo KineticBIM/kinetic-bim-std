@@ -10,7 +10,13 @@ carries NO Authorization header while the machine actions carry
 import os
 import sys
 import json
+import tempfile
 import unittest
+
+# Redirect the licensing logger's base dir to a temp folder so non-2xx
+# responses logged during these tests don't pollute the real
+# %LOCALAPPDATA%\KineticBIM\logs.
+os.environ["LOCALAPPDATA"] = tempfile.mkdtemp(prefix="kbim-test-")
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, os.pardir, "lib"))

@@ -7,24 +7,32 @@ machine file against the one computed here; the online activation
 follow-up will reuse this exact function to register the machine with
 Keygen, so both sides MUST agree byte-for-byte.
 
-The composite is three factors hashed together:
+The composite is three slots hashed together:
 
-    1. Hardware UUID  - WMI Win32_ComputerSystemProduct.UUID
-    2. Machine SID    - the S-1-5-21-X-Y-Z account-domain SID, with a
-                        registry MachineGuid fallback
-    3. Primary MAC    - lowest physical address among non-loopback,
-                        non-tunnel adapters
+    1. Anchor   - registry HKLM\\...\\Cryptography\\MachineGuid (stable,
+                  unique), falling back to the hostname when the registry
+                  isn't reachable. Always non-empty.
+    2. (SID)    - intentionally blank: the account-domain SID needs WMI,
+                  which is unsupported on Revit 2025's .NET (Core) runtime.
+                  Kept as a slot so the layout is stable if restored later.
+    3. Primary MAC - lowest physical address among non-loopback,
+                  non-tunnel adapters.
 
-Each factor is normalised (uppercased, separators stripped), joined
-with "|", and SHA-256 hashed to a hex digest. Live collection needs
-the CLR (WMI / NetworkInformation / registry) and only runs under
-IronPython on Windows; compute() is seamed so tests inject fixed
-factor values and never touch the machine.
+Runtime note: Revit 2025's pyRevit runs IronPython on .NET (Core), not
+.NET Framework, so System.Management (WMI) is unavailable and
+Microsoft.Win32.Registry lives in its own assembly. The collectors are
+written to work on that runtime; failures are logged to the licensing
+log so a live "couldn't read hardware ID" can be diagnosed.
+
+Each slot is normalised (uppercased, separators stripped), joined with
+"|", and SHA-256 hashed to a hex digest. compute() is seamed so tests
+inject fixed values and never touch the machine.
 
 current() caches the live result for the process lifetime so the gate
 stays cheap when called at every tool launch.
 """
 
+import os
 import re
 import hashlib
 
@@ -72,26 +80,38 @@ def _normalize(value):
 
 
 def _live_uuid():
-    """Win32_ComputerSystemProduct.UUID via WMI. Empty string on failure."""
+    """Anchor factor. Prefer the registry MachineGuid (stable + unique);
+    fall back to the hostname, which is always present and needs no CLR.
+
+    WMI is intentionally NOT used: under Revit 2025's .NET (Core) runtime
+    System.Management raises "only supported for Windows desktop
+    applications" (see the licensing log), so it can't be relied on."""
+    mg = _machine_guid()
+    if mg:
+        return mg
+    host = _hostname()
+    if host:
+        return host
+    return ""
+
+
+def _hostname():
+    """Machine name - always available on Windows, no CLR needed."""
+    name = os.environ.get("COMPUTERNAME")
+    if name:
+        return name
     try:
-        import clr  # type: ignore
-        clr.AddReference("System.Management")
-        from System.Management import ManagementObjectSearcher  # type: ignore
-        searcher = ManagementObjectSearcher(
-            "SELECT UUID FROM Win32_ComputerSystemProduct")
-        for obj in searcher.Get():
-            value = obj["UUID"]
-            if value:
-                return str(value)
-    except Exception:
-        pass
+        import socket
+        return socket.gethostname()
+    except Exception as exc:
+        _log_warn("hostname lookup failed: {0}".format(exc))
     return ""
 
 
 def _live_mac():
     """Lowest physical address among real (non-loopback, non-tunnel)
     network adapters. Sorting makes the choice deterministic regardless
-    of adapter enumeration order. Empty string on failure."""
+    of adapter enumeration order. Empty string on failure (logged)."""
     try:
         import clr  # type: ignore
         clr.AddReference("System")
@@ -110,39 +130,31 @@ def _live_mac():
         if macs:
             macs.sort()
             return macs[0]
-    except Exception:
-        pass
+    except Exception as exc:
+        _log_warn("MAC lookup failed: {0}".format(exc))
     return ""
 
 
 def _live_sid():
-    """Machine (account-domain) SID, e.g. S-1-5-21-X-Y-Z.
-
-    Derived by taking any local account's SID and stripping its trailing
-    RID. Falls back to the registry MachineGuid when the WMI query is
-    unavailable or slow to resolve. Empty string only if both fail.
-    """
-    try:
-        import clr  # type: ignore
-        clr.AddReference("System.Management")
-        from System.Management import ManagementObjectSearcher  # type: ignore
-        searcher = ManagementObjectSearcher(
-            "SELECT SID FROM Win32_UserAccount WHERE LocalAccount=true")
-        for obj in searcher.Get():
-            sid = obj["SID"]
-            if sid and str(sid).startswith("S-1-5-21-"):
-                # Strip the trailing -<RID> to get the machine SID.
-                return str(sid).rsplit("-", 1)[0]
-    except Exception:
-        pass
-    return _machine_guid()
+    """Second SID factor is unavailable under the .NET (Core) runtime
+    (System.Management is unsupported there), so it is intentionally blank.
+    The MachineGuid/hostname anchor plus the MAC already bind the seat.
+    Kept as a slot so the composite layout stays stable if SID support is
+    restored later."""
+    return ""
 
 
 def _machine_guid():
-    """HKLM\\SOFTWARE\\Microsoft\\Cryptography\\MachineGuid - a stable
-    per-install identifier, used as the SID fallback. Empty on failure."""
+    """HKLM\\SOFTWARE\\Microsoft\\Cryptography\\MachineGuid - the preferred
+    stable, unique anchor. References Microsoft.Win32.Registry explicitly so
+    it resolves under both .NET Framework (mscorlib) and .NET (Core), where
+    it lives in its own assembly. Empty on failure (logged)."""
     try:
         import clr  # type: ignore
+        try:
+            clr.AddReference("Microsoft.Win32.Registry")   # .NET (Core)
+        except Exception:
+            pass   # .NET Framework: Registry is already in mscorlib
         from Microsoft.Win32 import Registry  # type: ignore
         key = Registry.LocalMachine.OpenSubKey(
             r"SOFTWARE\Microsoft\Cryptography")
@@ -150,6 +162,16 @@ def _machine_guid():
             value = key.GetValue("MachineGuid")
             if value:
                 return str(value)
+    except Exception as exc:
+        _log_warn("MachineGuid lookup failed: {0}".format(exc))
+    return ""
+
+
+def _log_warn(message):
+    """Log a collector failure to the licensing log; never raise."""
+    try:
+        from bim_core import log as log_module
+        log_module.get_logger(tool_name="licensing").warning(
+            "fingerprint: %s", message)
     except Exception:
         pass
-    return ""

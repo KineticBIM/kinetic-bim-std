@@ -16,6 +16,11 @@ import tempfile
 import datetime
 import unittest
 
+# Redirect the licensing logger's base dir to a temp folder so the raw
+# exceptions logged during these tests don't pollute the real
+# %LOCALAPPDATA%\KineticBIM\logs.
+os.environ["LOCALAPPDATA"] = tempfile.mkdtemp(prefix="kbim-test-")
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, os.pardir, "lib"))
 

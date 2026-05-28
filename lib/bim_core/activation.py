@@ -46,7 +46,8 @@ def activate(key, client=None, store=None):
 
     try:
         fp = fingerprint.current()
-    except Exception:
+    except Exception as exc:
+        _log_exc("fingerprint.current failed", exc)
         return Outcome(False, "error",
                        "Couldn't read this workstation's hardware ID.")
 
@@ -221,10 +222,25 @@ def _seat_in_use():
 
 
 def _network_outcome(exc, action="reach the licensing server"):
+    _log_exc("activation transport/keygen error", exc)
     return Outcome(False, "network_error",
                    "Couldn't {0}. Check your internet connection and try "
                    "again.".format(action if action != "deactivate"
                                     else "release the seat right now"))
+
+
+def _log_exc(message, exc):
+    """Log a raw exception to the licensing log so live (in-Revit)
+    failures are diagnosable; never raises."""
+    try:
+        from bim_core import log as log_module
+        logger = log_module.get_logger(tool_name="licensing")
+        code = getattr(exc, "code", None)
+        status = getattr(exc, "status", None)
+        logger.error("activation: %s: %s: %s (code=%s status=%s)",
+                     message, type(exc).__name__, exc, code, status)
+    except Exception:
+        pass
 
 
 def _is_limit(exc):

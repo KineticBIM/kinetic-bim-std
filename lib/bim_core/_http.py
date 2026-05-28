@@ -20,14 +20,20 @@ keygen_client (never at CPython test time).
 """
 
 import clr  # type: ignore
-clr.AddReference("System")
+
+# Assembly layout differs between .NET Framework and Revit 2025's
+# .NET (Core) runtime, so reference the candidates defensively - the
+# right one resolves WebRequest/WebException on each.
+for _asm in ("System", "System.Net.Requests", "System.Net.Primitives",
+             "System.Net.ServicePoint"):
+    try:
+        clr.AddReference(_asm)
+    except Exception:
+        pass
 
 from System.IO import StreamReader                    # type: ignore
 from System.Text import Encoding                      # type: ignore
-from System.Net import (                              # type: ignore
-    HttpWebRequest, WebRequest, WebException,
-    ServicePointManager, SecurityProtocolType,
-)
+from System.Net import WebRequest, WebException       # type: ignore
 
 
 class HttpError(Exception):
@@ -43,12 +49,20 @@ class HttpError(Exception):
 
 
 def _enable_modern_tls():
-    proto = SecurityProtocolType.Tls12
+    """Force TLS 1.2/1.3 on .NET Framework. On .NET (Core) TLS is handled
+    by the OS and ServicePointManager is largely a no-op, so any failure
+    here is non-fatal."""
     try:
-        proto |= SecurityProtocolType.Tls13
-    except (AttributeError, ValueError):
+        from System.Net import (                       # type: ignore
+            ServicePointManager, SecurityProtocolType)
+        proto = SecurityProtocolType.Tls12
+        try:
+            proto = proto | SecurityProtocolType.Tls13
+        except Exception:
+            pass
+        ServicePointManager.SecurityProtocol = proto
+    except Exception:
         pass
-    ServicePointManager.SecurityProtocol = proto
 
 
 _enable_modern_tls()
