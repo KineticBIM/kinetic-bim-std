@@ -1,0 +1,11 @@
+{
+  "uuid": "4C4C4544-0042-3010-8044-B4C04F503432",
+  "sid": "S-1-5-21-1111111111-2222222222-3333333333",
+  "mac": "AABBCCDDEEFF",
+  "fingerprint": "1c5f6e8efa16b3b60f17e92492ba364321ddf8897c4e67d62231e5b088ad4f13",
+  "policy_name": "standard",
+  "issued": "2026-05-27T07:23:18.000Z",
+  "expiry": "2027-05-28T07:23:18.000Z",
+  "file_type": "machine",
+  "alg": "base64+ed25519"
+}

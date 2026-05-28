@@ -1,0 +1,23 @@
+Third-party component bundled with Kinetic BIM Standard
+=======================================================
+
+BouncyCastle.Crypto.dll
+  Package : Portable.BouncyCastle
+  Version : 1.9.0
+  Target  : net40 (single self-contained assembly; references only
+            mscorlib + System, no transitive NuGet dependencies)
+  Source  : https://www.nuget.org/packages/Portable.BouncyCastle/1.9.0
+  SHA-256 : E51721DC0647F4838B1ABC592BD95FD8CB924716E8A64F83D4B947821FA1FA42
+
+Used by lib/bim_core/_crypto.py for offline Ed25519 signature
+verification of Keygen license/machine files (the .NET Framework that
+pyRevit's IronPython engine runs on has no native Ed25519 primitive).
+
+License
+-------
+The Bouncy Castle C# API is distributed under an adaptation of the MIT
+X11 License, which permits commercial use and redistribution. Full
+text: https://www.bouncycastle.org/csharp/licence.html
+
+Copyright (c) 2000-2021 The Legion of the Bouncy Castle Inc.
+(https://www.bouncycastle.org)
