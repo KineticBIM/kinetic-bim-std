@@ -52,13 +52,18 @@ def _logger(doc):
 # Scan
 # ---------------------------------------------------------------------------
 
-def scan(doc, view, profiles):
+def scan(doc, view, profiles, progress=None):
     """Walk the active view for every enabled profile and produce per-
     element records.
 
     Records gain a `profile_key` (e.g. "mechanical/duct") and
     `already_dimensioned` flag derived from the per-view dimension
     sweep. Disabled profiles are skipped entirely.
+
+    progress: optional callable(processed:int, total:int) -> bool.
+        Same contract as qa_engine.scan: returning False cancels and
+        scan returns None. Throttled to one tick per PROGRESS_STEP
+        elements.
     """
     logger = _logger(doc)
     enabled_profiles = [p for p in profiles if p.enabled]
@@ -94,6 +99,8 @@ def scan(doc, view, profiles):
 
     rule_failure_counts = {}
     records = []
+    total = sum(len(elements_by_cat.get(k, [])) for k in pipelines_by_cat)
+    processed = 0
     for cat_key, cat_pipelines in pipelines_by_cat.items():
         elements = elements_by_cat.get(cat_key, [])
         for el in elements:
@@ -101,6 +108,16 @@ def scan(doc, view, profiles):
                 el, cat_key, cat_pipelines, doc, view,
                 dimensioned_ids, rule_failure_counts)
             records.append(record)
+            processed += 1
+            if (progress is not None
+                    and processed % PROGRESS_STEP == 0
+                    and not progress(processed, total)):
+                logger.info(
+                    "Scan cancelled by user at %d/%d.", processed, total)
+                return None
+
+    if progress is not None and total:
+        progress(total, total)
 
     audit_count = sum(1 for r in records if r["audit_eligible"])
     eligible_count = sum(1 for r in records if r["eligible"])
@@ -108,6 +125,11 @@ def scan(doc, view, profiles):
         "Scan finished. total=%d audit_eligible=%d eligible=%d failures=%s",
         len(records), audit_count, eligible_count, rule_failure_counts)
     return records
+
+
+# Mirrors qa_engine.PROGRESS_STEP. 25 keeps UI ticks frequent enough
+# to feel live without dominating runtime via Dispatcher round-trips.
+PROGRESS_STEP = 25
 
 
 def _evaluate_element(el, cat_key, cat_pipelines, doc, view,

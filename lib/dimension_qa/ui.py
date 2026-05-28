@@ -564,13 +564,30 @@ class DimensionWindow(forms.WPFWindow):
         if not self._validate_or_alert(profiles):
             return
         try:
-            self.records = dimensioning_engine.scan(
-                self.doc, self.view, profiles)
+            with forms.ProgressBar(
+                    title="Auto Dimension - scanning active view...",
+                    cancellable=True) as pb:
+                def _progress(processed, total):
+                    if pb.cancelled:
+                        return False
+                    pb.update_progress(processed, total)
+                    return True
+                self.records = dimensioning_engine.scan(
+                    self.doc, self.view, profiles, progress=_progress)
         except Exception as exc:
             errors.show_error("auto_dimension",
                               "Couldn't scan the model for dimension candidates.",
                               exc=exc, logger=self._logger)
             return
+
+        if self.records is None:
+            # scan() returns None when the user clicked Cancel. Reset
+            # to [] so place_clicked / report_clicked see no partial
+            # data, and surface the cancel in the results pane.
+            self.records = []
+            self._render_results("(scan cancelled)")
+            return
+
         self._render_results(self._summary_text(profiles))
 
     def place_clicked(self, sender, args):  # noqa: ARG002
