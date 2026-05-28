@@ -54,12 +54,14 @@ _ENFORCE_WHEN_ABSENT = False
 
 # Kinetic BIM Keygen account Ed25519 public key (hex). Ed25519 public
 # keys are not secret - hard-coding it is the whole point of offline
-# verification.
-# DEV PLACEHOLDER: this is the throwaway key that signs the synthetic
-# test fixtures. Replace with the real Keygen account public key during
-# the online activation follow-up.
+# verification. This is the Dev sandbox account's key; swap in the
+# production account public key at GA (alongside the account id in
+# keygen_client). NOTE: real Keygen-signed machine files now verify
+# against this; the synthetic test fixture (signed by a throwaway dev
+# key, see tests/fixtures/public_key.hex) no longer satisfies the live
+# gate - that fixture only exercises the parser's unit tests.
 _ACCOUNT_PUBLIC_KEY_HEX = (
-    "3ccd241cffc9b3618044b97d036d8614593d8b017c340f1dee8773385517654b")
+    "655982a0880076f3e4b1dfe0fcb71134450d4e99b457aac7d9af081dc61aca1e")
 
 # Which tools each policy entitles. Standard is a single all-tools
 # policy; the granularity exists for the future Pro tier.

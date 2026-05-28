@@ -20,8 +20,9 @@ unit-testable with a mock transport - under plain CPython.
 import json
 
 
-# Real account id swaps in with live creds; not a secret (path param).
-_ACCOUNT_ID = "<DEV-PLACEHOLDER>"
+# Keygen account id - a path param, not a secret. This is the Dev
+# sandbox account; swap in the production account id at GA.
+_ACCOUNT_ID = "e872ad63-b3b9-4cee-a6c0-f8312e995e12"
 
 API_HOST = "https://api.keygen.sh"
 API_VERSION = "v1"
