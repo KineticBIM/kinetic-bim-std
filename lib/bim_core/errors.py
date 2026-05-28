@@ -1,17 +1,19 @@
 # -*- coding: utf-8 -*-
-"""User-facing error display helpers for Kinetic BIM tools.
+"""User-facing error and validation display helpers for Kinetic BIM
+tools.
 
-Wraps pyRevit's forms.alert with three pieces of polish missing from
-the raw `forms.alert("...{0}".format(exc))` patterns scattered through
-the tools:
+Wraps pyRevit's forms.alert (and System.Windows.MessageBox for WPF
+contexts) with consistent title-prefix branding and, for exception
+paths, traceback logging. Three helpers:
 
-    1. The full traceback goes to the tool's bim_core.log logger so
-       support can read it later, but only the friendly summary plus
-       short exception message is shown to the user.
-    2. A consistent title prefix ("[Auto Tag]") is prepended so the
-       user knows which tool produced the error.
-    3. The log file path is appended to the dialog body so the user
-       can find the detail when reporting to support.
+    show_error          - exception path, pyRevit forms.alert
+    show_error_modal    - exception path, WPF MessageBox
+    show_warning        - validation/info path (no exception), forms.alert
+
+The validation helper exists so the user-facing convention stays one
+family - the dialog body's `[Tool Name]` prefix is the same in both
+paths, only the message content distinguishes 'something blew up' from
+'your input isn't valid yet'.
 
 Replaces:
     forms.alert("Scan failed: {0}".format(exc), exitscript=False)
@@ -20,6 +22,14 @@ Replaces:
     errors.show_error("auto_tag",
                       "Couldn't scan the model.",
                       exc=exc, logger=logger)
+
+And:
+    forms.alert("Missing required column(s): {0}".format(missing),
+                exitscript=True)
+                   with
+    errors.show_warning("sheet_create",
+                        "Missing required column(s): {0}".format(missing),
+                        exitscript=True)
 """
 
 from pyrevit import forms
@@ -71,6 +81,29 @@ def show_error(tool_name, summary, exc=None, logger=None, exitscript=False):
         body_lines.append("Log: " + log_p)
 
     forms.alert("\n".join(body_lines), exitscript=exitscript)
+
+
+def show_warning(tool_name, summary, exitscript=False):
+    """Show a friendly validation/info dialog.
+
+    For paths that aren't exception handlers - missing required input,
+    empty data, prerequisite not met. show_error logs a traceback and
+    surfaces a log path; show_warning has neither because no exception
+    ever happened. Body format matches show_error so the two read as
+    one family.
+
+    Args:
+        tool_name: Snake_case tool identifier (e.g. "sheet_create").
+            Drives the dialog title prefix ("[Sheet Create]").
+        summary: User-facing message. Plain English, multi-line OK
+            (sheet tools include "Found headers: ..." context lines).
+        exitscript: When True, terminates the script after the dialog
+            closes. Matches the existing validation sites' behavior
+            (most are guard clauses that can't usefully continue).
+    """
+    title = _display_title(tool_name)
+    body = "[{0}]\n{1}".format(title, summary)
+    forms.alert(body, exitscript=exitscript)
 
 
 def show_error_modal(tool_name, summary, exc=None, tb=None, logger=None):

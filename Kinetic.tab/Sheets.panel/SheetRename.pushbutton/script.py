@@ -67,18 +67,20 @@ def main():
         return
 
     if not rows:
-        forms.alert("No data rows found in {}.".format(sheet_path), exitscript=True)
+        errors.show_warning(
+            "sheet_rename",
+            "No data rows found in {0}.".format(sheet_path),
+            exitscript=True)
 
     role_for = resolve_columns(headers)
     role_to_header = {role: h for h, role in role_for.items() if role}
     missing = [r for r in ("number", "name") if r not in role_to_header]
     if missing:
-        forms.alert(
-            "Missing required column(s): {}.\n\nFound headers: {}".format(
-                ", ".join(missing), ", ".join(h for h in headers if h)
-            ),
-            exitscript=True,
-        )
+        errors.show_warning(
+            "sheet_rename",
+            "Missing required column(s): {0}.\n\nFound headers: {1}".format(
+                ", ".join(missing), ", ".join(h for h in headers if h)),
+            exitscript=True)
 
     lookup = sheets_by_number()
     renamed, skipped = [], []
