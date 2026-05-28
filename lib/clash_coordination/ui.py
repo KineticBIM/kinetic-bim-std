@@ -285,18 +285,16 @@ class CoordinationWindow(forms.WPFWindow):
         if latest and os.path.isdir(latest):
             os.startfile(latest)
         else:
-            MessageBox.Show(
-                "No coordination output folder to open yet.",
-                "Open output folder",
-                MessageBoxButton.OK, MessageBoxImage.Information)
+            errors.show_warning_modal(
+                TOOL_NAME,
+                "No coordination output folder to open yet.")
 
     def OnSaveProfileClicked(self, sender, args):
         output_root = (self.OutputRootBox.Text or "").strip()
         if not output_root:
-            MessageBox.Show(
-                "Set the Output folder before saving an override.",
-                "Save profile",
-                MessageBoxButton.OK, MessageBoxImage.Warning)
+            errors.show_warning_modal(
+                TOOL_NAME,
+                "Set the Output folder before saving an override.")
             return
         updates = self._build_profile_updates_from_ui()
         try:
@@ -313,10 +311,9 @@ class CoordinationWindow(forms.WPFWindow):
 
     def OnCloseClicked(self, sender, args):
         if self._running:
-            MessageBox.Show(
-                "A run is in progress - please wait for it to finish.",
-                "Close",
-                MessageBoxButton.OK, MessageBoxImage.Information)
+            errors.show_warning_modal(
+                TOOL_NAME,
+                "A run is in progress - please wait for it to finish.")
             return
         self.Close()
 
@@ -326,16 +323,14 @@ class CoordinationWindow(forms.WPFWindow):
         nwf = (self.NwfPathBox.Text or "").strip()
         out_root = (self.OutputRootBox.Text or "").strip()
         if not nwf or not os.path.isfile(nwf):
-            MessageBox.Show(
-                "The federated NWF/NWD does not exist:\n{0}".format(nwf),
-                "Run",
-                MessageBoxButton.OK, MessageBoxImage.Warning)
+            errors.show_warning_modal(
+                TOOL_NAME,
+                "The federated NWF/NWD does not exist:\n{0}".format(nwf))
             return
         if not out_root:
-            MessageBox.Show(
-                "Pick an output folder before running.",
-                "Run",
-                MessageBoxButton.OK, MessageBoxImage.Warning)
+            errors.show_warning_modal(
+                TOOL_NAME,
+                "Pick an output folder before running.")
             return
 
         selected_tests = []

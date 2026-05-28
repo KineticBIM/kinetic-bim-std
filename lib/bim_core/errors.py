@@ -4,11 +4,12 @@ tools.
 
 Wraps pyRevit's forms.alert (and System.Windows.MessageBox for WPF
 contexts) with consistent title-prefix branding and, for exception
-paths, traceback logging. Three helpers:
+paths, traceback logging. Four helpers:
 
     show_error          - exception path, pyRevit forms.alert
     show_error_modal    - exception path, WPF MessageBox
     show_warning        - validation/info path (no exception), forms.alert
+    show_warning_modal  - validation/info path, WPF MessageBox
 
 The validation helper exists so the user-facing convention stays one
 family - the dialog body's `[Tool Name]` prefix is the same in both
@@ -81,6 +82,33 @@ def show_error(tool_name, summary, exc=None, logger=None, exitscript=False):
         body_lines.append("Log: " + log_p)
 
     forms.alert("\n".join(body_lines), exitscript=exitscript)
+
+
+def show_warning_modal(tool_name, summary):
+    """Show a modal validation/info dialog from a WPF window context.
+
+    Sibling of show_warning for tools whose UI is a WPF window rather
+    than a pyRevit pushbutton screen. forms.alert does not own a WPF
+    dialog parent, so we route through System.Windows.MessageBox for
+    correct modality and z-order.
+
+    No exitscript parameter - WPF windows are typically still open
+    after a validation warning (user clicks OK, fixes the input,
+    retries). The tool name lands in the MessageBox caption rather
+    than the body, matching show_error_modal's convention.
+    """
+    import clr  # type: ignore
+    clr.AddReference("PresentationFramework")
+    from System.Windows import (   # type: ignore  # noqa: E402
+        MessageBox, MessageBoxButton, MessageBoxImage,
+    )
+
+    MessageBox.Show(
+        summary,
+        _display_title(tool_name),
+        MessageBoxButton.OK,
+        MessageBoxImage.Warning,
+    )
 
 
 def show_warning(tool_name, summary, exitscript=False):
