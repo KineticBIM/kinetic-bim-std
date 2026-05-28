@@ -125,7 +125,11 @@ def check(tool_name):
     # Seat is valid. About is a diagnostic - always allowed.
     if tool_name == "about":
         return True
-    tools = _POLICY_TOOLS.get(parsed.policy_name() or "", frozenset())
+    # Default to Standard when the machine file doesn't embed a policy
+    # (we check out with include=license, not license.policy). Safe for
+    # the Standard-only product; revisit when Pro adds tier gating.
+    policy = parsed.policy_name() or "standard"
+    tools = _POLICY_TOOLS.get(policy, frozenset())
     return tool_name in tools
 
 

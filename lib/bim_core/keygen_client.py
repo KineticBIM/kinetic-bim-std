@@ -132,7 +132,10 @@ class KeygenClient(object):
     def check_out(self, key, machine_id, ttl=DEFAULT_TTL):
         """Check out a signed machine file. Returns the PEM certificate."""
         path = "machines/{0}/actions/check-out".format(machine_id)
-        query = "ttl={0}&include=license.policy".format(int(ttl))
+        # include=license (not the nested license.policy) matches Keygen's
+        # documented working example; the offline gate defaults a missing
+        # policy to Standard, so we don't need the policy embedded.
+        query = "ttl={0}&include=license".format(int(ttl))
         status, doc = self._send("POST", path, key=key, query=query)
         if status < 200 or status >= 300:
             raise self._error(status, doc, "License check-out failed")

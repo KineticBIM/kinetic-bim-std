@@ -134,7 +134,7 @@ class CheckOutTest(unittest.TestCase):
         self.assertEqual(call["method"], "POST")
         self.assertIn("/machines/MID/actions/check-out", call["url"])
         self.assertIn("ttl=1209600", call["url"])
-        self.assertIn("include=license.policy", call["url"])
+        self.assertIn("include=license", call["url"])
         self.assertEqual(call["headers"]["Authorization"], "License KEY")
         self.assertEqual(cert, "PEM")
 
