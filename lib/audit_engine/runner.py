@@ -75,8 +75,12 @@ def _report_path(doc, kind):
 # Public entry points
 # ---------------------------------------------------------------------------
 
-def run_health_audit(doc, output=None):
-    scan = scanners.run_all(doc)
+def run_health_audit(doc, output=None, progress=None):
+    """Returns (report_path, findings), or None when the user cancels
+    the scan via the progress callback."""
+    scan = scanners.run_all(doc, progress=progress)
+    if scan is None:
+        return None
     findings = rules.health_rules(scan)
 
     project = scan.get("project", {})
@@ -89,9 +93,13 @@ def run_health_audit(doc, output=None):
     return out_path, findings
 
 
-def run_qa_check(doc, output=None):
+def run_qa_check(doc, output=None, progress=None):
+    """Returns (report_path, findings), or None when the user cancels
+    the scan via the progress callback."""
     config, config_path = load_qa_config(doc)
-    scan = scanners.run_all(doc, qa_config=config)
+    scan = scanners.run_all(doc, qa_config=config, progress=progress)
+    if scan is None:
+        return None
     findings = rules.qa_rules(scan, config)
 
     project = scan.get("project", {})

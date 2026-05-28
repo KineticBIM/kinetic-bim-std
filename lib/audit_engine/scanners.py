@@ -345,22 +345,41 @@ def scan_groups(doc):
 # Master scan
 # ---------------------------------------------------------------------------
 
-def run_all(doc, qa_config=None):
+def run_all(doc, qa_config=None, progress=None):
     """
     Run every scanner and return a single dict.
+
     qa_config (optional) is a dict loaded from JSON; only used to pass
     project-specific patterns into pattern-aware scanners.
+
+    progress (optional) is callable(done:int, total:int, current:str)
+    -> bool. Invoked BEFORE each scanner runs so the UI can label the
+    bar ("Scanning warnings..."). Return False to cancel; run_all then
+    stops and returns None - downstream rules/reporting must not run
+    on a partial scan. Step granularity is one tick per scanner (9
+    total). Per-scanner timing varies a lot (warnings near-instant,
+    families slow on large libraries), so progress feels uneven; this
+    matches reality better than faking a uniform cadence.
     """
     qa_config = qa_config or {}
-    return {
-        "project":      scan_project_info(doc),
-        "warnings":     scan_warnings(doc),
-        "worksets":     scan_worksets(doc),
-        "views":        scan_views(doc),
-        "view_naming":  scan_view_naming(
-            doc, pattern=qa_config.get("view_name_pattern")),
-        "cad":          scan_cad_imports(doc),
-        "links":        scan_revit_links(doc),
-        "families":     scan_families(doc),
-        "groups":       scan_groups(doc),
-    }
+    steps = [
+        ("project",      lambda: scan_project_info(doc)),
+        ("warnings",     lambda: scan_warnings(doc)),
+        ("worksets",     lambda: scan_worksets(doc)),
+        ("views",        lambda: scan_views(doc)),
+        ("view_naming",  lambda: scan_view_naming(
+            doc, pattern=qa_config.get("view_name_pattern"))),
+        ("cad",          lambda: scan_cad_imports(doc)),
+        ("links",        lambda: scan_revit_links(doc)),
+        ("families",     lambda: scan_families(doc)),
+        ("groups",       lambda: scan_groups(doc)),
+    ]
+    total = len(steps)
+    out = {}
+    for i, (key, fn) in enumerate(steps):
+        if progress is not None and not progress(i, total, key):
+            return None
+        out[key] = fn()
+    if progress is not None:
+        progress(total, total, None)
+    return out

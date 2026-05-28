@@ -13,7 +13,7 @@ __author__  = "Kinetic BIM"
 __doc__     = "Run a project-specific QA compliance check."
 
 import os
-from pyrevit import revit, script
+from pyrevit import revit, forms, script
 
 from audit_engine import runner
 from bim_core import errors
@@ -51,12 +51,30 @@ def main():
 
     output.print_md("# Running QA Check...")
     try:
-        report_path, findings = runner.run_qa_check(doc, output=output)
+        with forms.ProgressBar(
+                title="QA Check - scanning model...",
+                cancellable=True) as pb:
+            def _progress(done, total, current):
+                if pb.cancelled:
+                    return False
+                pb.update_progress(done, total)
+                if current:
+                    pb.title = "QA Check - {0}...".format(current)
+                return True
+            result = runner.run_qa_check(
+                doc, output=output, progress=_progress)
     except Exception as exc:
         errors.show_error("qa_check",
                           "Couldn't complete the QA check.",
                           exc=exc)
         return
+
+    if result is None:
+        output.print_md("---")
+        output.print_md("(check cancelled)")
+        return
+
+    report_path, findings = result
     output.print_md("---")
     output.print_md(
         "Report written to: [{0}]({0})".format(report_path))

@@ -13,7 +13,7 @@ __author__  = "Kinetic BIM"
 __doc__     = "Run a model health audit and produce an HTML report."
 
 import os
-from pyrevit import revit, script
+from pyrevit import revit, forms, script
 
 from audit_engine import runner
 from bim_core import errors
@@ -36,12 +36,30 @@ def main():
 
     output.print_md("# Running Health Audit...")
     try:
-        report_path, findings = runner.run_health_audit(doc, output=output)
+        with forms.ProgressBar(
+                title="Health Audit - scanning model...",
+                cancellable=True) as pb:
+            def _progress(done, total, current):
+                if pb.cancelled:
+                    return False
+                pb.update_progress(done, total)
+                if current:
+                    pb.title = "Health Audit - {0}...".format(current)
+                return True
+            result = runner.run_health_audit(
+                doc, output=output, progress=_progress)
     except Exception as exc:
         errors.show_error("health_audit",
                           "Couldn't complete the health audit.",
                           exc=exc)
         return
+
+    if result is None:
+        output.print_md("---")
+        output.print_md("(audit cancelled)")
+        return
+
+    report_path, findings = result
     output.print_md("---")
     output.print_md(
         "Report written to: [{0}]({0})".format(report_path))
