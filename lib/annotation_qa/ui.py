@@ -692,14 +692,34 @@ class AnnotationQAWindow(forms.WPFWindow):
             return
 
         whole_model = bool(self.scan_options.get("whole_model"))
+        scope_label = "whole model" if whole_model else "active view"
         try:
-            self.records = qa_engine.scan(
-                self.doc, self.view, profiles, whole_model=whole_model)
+            with forms.ProgressBar(
+                    title="Auto Tag - scanning " + scope_label + "...",
+                    cancellable=True) as pb:
+                def _progress(processed, total):
+                    if pb.cancelled:
+                        return False
+                    pb.update_progress(processed, total)
+                    return True
+                self.records = qa_engine.scan(
+                    self.doc, self.view, profiles,
+                    whole_model=whole_model,
+                    progress=_progress)
         except Exception as exc:
             errors.show_error("auto_tag",
                               "Couldn't scan the model for tag candidates.",
                               exc=exc, logger=self._logger)
             return
+
+        if self.records is None:
+            # scan() returns None when the user clicked Cancel on the
+            # progress bar. Clear any prior records (the run is partial
+            # and not safe to act on) and let the user start over.
+            self.records = []
+            self._render_results("(scan cancelled)")
+            return
+
         self._render_results(self._summary_text(profiles))
 
     def place_clicked(self, sender, args):  # noqa: ARG002

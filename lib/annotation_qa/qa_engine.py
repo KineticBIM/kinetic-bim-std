@@ -53,7 +53,7 @@ render_html = reporting.render_html
 # Scan
 # ---------------------------------------------------------------------------
 
-def scan(doc, view, profiles, whole_model=False):
+def scan(doc, view, profiles, whole_model=False, progress=None):
     """Walk the model for every enabled profile and produce per-element
     records.
 
@@ -63,6 +63,13 @@ def scan(doc, view, profiles, whole_model=False):
     OST_PipeCurves with disjoint system filters), each element is
     evaluated against every profile in selection order; the first
     profile whose pipeline passes owns the element.
+
+    progress: optional callable(processed:int, total:int) -> bool.
+        Invoked periodically (every PROGRESS_STEP elements) so the UI
+        can drive a progress bar. Return False to cancel; scan then
+        stops and returns None. Throttled to avoid swamping the UI
+        thread - per-element invocation would dominate runtime on
+        whole-model scopes with 10k+ elements.
 
     Each record carries:
         element, id, name, length_mm, is_horizontal, already_tagged,
@@ -123,6 +130,9 @@ def scan(doc, view, profiles, whole_model=False):
     rule_failure_counts = {}
     records = []
 
+    total = sum(len(elements_by_cat.get(k, [])) for k in pipelines_by_cat)
+    processed = 0
+
     for cat_key, cat_pipelines in pipelines_by_cat.items():
         elements = elements_by_cat.get(cat_key, [])
         visible_ids = visible_by_cat.get(cat_key)
@@ -133,6 +143,18 @@ def scan(doc, view, profiles, whole_model=False):
                 visible_ids, rule_failure_counts,
             )
             records.append(record)
+            processed += 1
+            if (progress is not None
+                    and processed % PROGRESS_STEP == 0
+                    and not progress(processed, total)):
+                logger.info(
+                    "Scan cancelled by user at %d/%d.", processed, total)
+                return None
+
+    if progress is not None and total:
+        # Final tick so the bar settles at 100% even when total is not
+        # a multiple of PROGRESS_STEP.
+        progress(total, total)
 
     audit_count = sum(1 for r in records if r["audit_eligible"])
     eligible_count = sum(1 for r in records if r["eligible"])
@@ -140,6 +162,13 @@ def scan(doc, view, profiles, whole_model=False):
         "Scan finished. total=%d audit_eligible=%d eligible=%d failures=%s",
         len(records), audit_count, eligible_count, rule_failure_counts)
     return records
+
+
+# How often to call progress() during the eval loop. Tuned to keep UI
+# updates frequent enough to feel live (a few times per second on a
+# typical whole-model scan) without dominating runtime via Dispatcher
+# round-trips. 25 -> ~400 ticks for a 10k-element model.
+PROGRESS_STEP = 25
 
 
 def _evaluate_element(el, cat_key, cat_pipelines, doc, view, tagged_ids,
