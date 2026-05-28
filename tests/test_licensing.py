@@ -39,13 +39,16 @@ def _past():
 def _machine_file(expiry_dt, fingerprint="FP", policy="Standard"):
     """A parseable plaintext machine file. The signature is a placeholder
     ('AA==') because these tests stub _crypto.verify; the real signing
-    bytes are validated by test_license_file."""
+    bytes are validated by test_license_file. policy=None omits the
+    `included` resource, mirroring a real check-out (include=license)."""
     dataset = {
         "data": {"type": "machines", "id": "MID",
                  "attributes": {"fingerprint": fingerprint}},
-        "included": [{"type": "policies", "attributes": {"name": policy}}],
         "meta": {"expiry": expiry_dt.strftime("%Y-%m-%dT%H:%M:%S.000Z")},
     }
+    if policy is not None:
+        dataset["included"] = [
+            {"type": "policies", "attributes": {"name": policy}}]
     enc = base64.b64encode(json.dumps(dataset).encode("utf-8")).decode("ascii")
     outer = {"enc": enc, "sig": "AA==", "alg": "base64+ed25519"}
     body = base64.b64encode(json.dumps(outer).encode("utf-8")).decode("ascii")
@@ -106,6 +109,13 @@ class LicensingGateTest(unittest.TestCase):
 
     def test_valid_file_licensed_tool_passes(self):
         self._write(_machine_file(_future()))
+        self.assertTrue(licensing.check("auto_tag"))
+
+    def test_no_embedded_policy_defaults_to_standard(self):
+        # Real check-outs use include=license (dff872c), so the machine
+        # file carries no policy resource. check() must default the
+        # missing policy to Standard and still license the Standard tools.
+        self._write(_machine_file(_future(), policy=None))
         self.assertTrue(licensing.check("auto_tag"))
 
     def test_about_always_allowed_for_valid_seat(self):
