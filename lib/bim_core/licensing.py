@@ -79,6 +79,13 @@ _POLICY_TOOLS = {
 
 _LICENSE_FILENAME = "machine.lic"
 
+# Opportunistic online refresh: when a cached file is within the refresh
+# window, try once per session to check out a fresh one before verifying.
+# Fail-soft - any error keeps the existing file. refresh_if_needed() is
+# cheap (local parse, no network) when the file is healthy or absent.
+_AUTO_REFRESH = True
+_REFRESH_ATTEMPTED = False
+
 
 class LicenseError(Exception):
     """Raised when the licensing infrastructure itself fails (file
@@ -96,6 +103,7 @@ def check(tool_name):
     See the module docstring for the full verification sequence and the
     grace-mode behaviour when no machine file is present.
     """
+    _maybe_refresh()
     path = _license_path()
 
     if not os.path.isfile(path):
@@ -223,6 +231,21 @@ def _license_path():
         base = os.path.expanduser("~")
     return os.path.normpath(
         os.path.join(base, "KineticBIM", "license", _LICENSE_FILENAME))
+
+
+def _maybe_refresh():
+    """Try once per session to refresh a near-expiry cached file before
+    the gate verifies it. Lazy import (activation pulls in the Keygen
+    client / HTTP stack) and fully fail-soft."""
+    global _REFRESH_ATTEMPTED
+    if not _AUTO_REFRESH or _REFRESH_ATTEMPTED:
+        return
+    _REFRESH_ATTEMPTED = True
+    try:
+        from bim_core import activation
+        activation.refresh_if_needed()
+    except Exception:
+        pass
 
 
 def _log(message):
