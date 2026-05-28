@@ -21,17 +21,18 @@ M2 offline verification core (this is what check() does now):
       (see fingerprint.py)
     - Confirm the active policy (Standard / Pro) covers tool_name
 
-Grace mode: until the online activation flow exists, no machine file is
-present on disk in normal use. So when no file is found the gate is
-permissive (_ENFORCE_WHEN_ABSENT = False) - this avoids locking users
-out of the tools before activation ships. A file that IS present is
-fully enforced (bad signature / expired / wrong machine -> LicenseError).
-Flip _ENFORCE_WHEN_ABSENT to True once activation can produce a file.
+Enforcement: online activation (activation.py) now produces the machine
+file, so the gate enforces unconditionally (_ENFORCE_WHEN_ABSENT = True).
+An unactivated workstation (no file) is blocked with a friendly prompt to
+activate; a file that IS present is fully enforced (bad signature /
+expired / wrong machine -> LicenseError). The earlier permissive grace
+mode (False) remains available only for local pre-activation debugging.
 
-Still out of scope (online follow-up): Keygen API client, license-key
-entry, machine activation, online check-out / TTL refresh, AES-256-GCM
-encrypted files, and swapping the DEV public key for the real account
-key below.
+The online half has landed (see activation.py / keygen_client.py):
+license-key entry, machine activation, online check-out / TTL refresh.
+Still out of scope: encryption-at-rest for the cached key (DPAPI on
+.NET Core; license_store currently falls back to tagged base64) and
+swapping the DEV sandbox public key for the real account key at GA.
 
 Named licensing (not license) to avoid shadowing Python's built-in
 license object from site.py.
@@ -48,9 +49,11 @@ from bim_core import _crypto
 
 # --- M2 configuration -------------------------------------------------
 
-# Permissive when no machine file is present. See grace-mode note above.
-# Flip to True with the online activation follow-up.
-_ENFORCE_WHEN_ABSENT = False
+# Enforce when no machine file is present: an unactivated workstation is
+# blocked at the gate. Online activation (activation.py) now produces the
+# file, so grace mode is no longer needed. Set False only to temporarily
+# restore the pre-activation permissive behaviour during local debugging.
+_ENFORCE_WHEN_ABSENT = True
 
 # Kinetic BIM Keygen account Ed25519 public key (hex). Ed25519 public
 # keys are not secret - hard-coding it is the whole point of offline
