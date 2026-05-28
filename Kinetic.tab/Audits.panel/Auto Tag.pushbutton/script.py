@@ -16,7 +16,7 @@ import os
 from pyrevit import revit, forms
 
 from annotation_qa.ui import AnnotationQAWindow
-from bim_core import errors, log as log_module
+from bim_core import errors, licensing, log as log_module
 
 
 __title__  = "Auto\nTag"
@@ -63,6 +63,7 @@ def _open_project_config(doc):
 
 
 def main():
+    licensing.require("auto_tag")
     doc = revit.doc
     view = doc.ActiveView
     if view is None:

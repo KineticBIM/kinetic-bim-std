@@ -14,7 +14,7 @@ restores the original numbers.
 """
 
 from pyrevit import revit, DB, forms, script
-from bim_core import errors
+from bim_core import errors, licensing
 from sheet_tools.excel_reader import read_sheet, normalise
 
 ALIASES = {
@@ -56,6 +56,7 @@ def coerce_text(value):
 
 
 def main():
+    licensing.require("sheet_renumber")
     sheet_path = forms.pick_file(
         files_filter="Sheet list (*.xlsx, *.csv)|*.xlsx;*.csv",
         title="Select sheet list",

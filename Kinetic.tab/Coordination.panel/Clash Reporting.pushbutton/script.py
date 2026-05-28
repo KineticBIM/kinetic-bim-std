@@ -19,10 +19,12 @@ __doc__     = "Run the weekly Navisworks clash coordination workflow."
 import os
 from pyrevit import revit, script
 
+from bim_core import licensing
 from clash_coordination import ui, project_config
 
 
 def main():
+    licensing.require("clash_reporting")
     doc = revit.doc
     output = script.get_output()
 

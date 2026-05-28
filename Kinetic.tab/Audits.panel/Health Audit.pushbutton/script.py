@@ -16,10 +16,11 @@ import os
 from pyrevit import revit, forms, script
 
 from audit_engine import runner
-from bim_core import errors
+from bim_core import errors, licensing
 
 
 def main():
+    licensing.require("health_audit")
     doc = revit.doc
     output = script.get_output()
 
