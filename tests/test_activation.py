@@ -160,6 +160,23 @@ class ActivateTest(ActivationTestBase):
         self.client.validate_exc = KeygenError("boom", status=0)
         outcome = activation.activate("KEY", self.client, self.store)
         self.assertEqual(outcome.status, "network_error")
+        self.assertIn("internet connection", outcome.message)
+
+    def test_4xx_on_validate_is_license_error(self):
+        # Server reached but refused the request (e.g. bad key) -> not a
+        # connectivity problem, so the user is told to check the key.
+        self.client.validate_exc = KeygenError("nope", status=404)
+        outcome = activation.activate("KEY", self.client, self.store)
+        self.assertEqual(outcome.status, "license_error")
+        self.assertNotIn("internet connection", outcome.message)
+
+    def test_5xx_on_checkout_is_server_error(self):
+        self.client.validate_result = ValidationResult(
+            False, "NO_MACHINE", "", "LIC")
+        self.client.checkout_exc = KeygenError("boom", status=503)
+        outcome = activation.activate("KEY", self.client, self.store)
+        self.assertEqual(outcome.status, "server_error")
+        self.assertIsNone(self.store.read_certificate())
 
     def test_activate_limit_maps_to_seat_in_use(self):
         self.client.validate_result = ValidationResult(

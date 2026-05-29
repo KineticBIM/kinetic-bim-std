@@ -221,12 +221,37 @@ def _seat_in_use():
                    "Release it there (Deactivate) before activating here.")
 
 
-def _network_outcome(exc, action="reach the licensing server"):
+def _network_outcome(exc, action="reach the Kinetic BIM server"):
+    """Map a transport / Keygen failure to a friendly Outcome.
+
+    Distinguishes three cases by the failure's HTTP status so the user gets
+    actionable guidance instead of a blanket "check your connection":
+      * status 0 / absent  -> we never reached the server (DNS, timeout, TLS,
+        offline). HttpError carries status=0; see bim_core._http.
+      * 4xx                -> the server answered and refused the request,
+        most often a bad/unrecognised license key. Not a connectivity issue.
+      * 5xx / other         -> the server is reachable but having a problem.
+    """
     _log_exc("activation transport/keygen error", exc)
-    return Outcome(False, "network_error",
-                   "Couldn't {0}. Check your internet connection and try "
-                   "again.".format(action if action != "deactivate"
-                                    else "release the seat right now"))
+    status = getattr(exc, "status", None)
+
+    if not status:
+        phrase = ("release the seat right now"
+                  if action == "deactivate" else action)
+        return Outcome(False, "network_error",
+                       "Couldn't {0}. Check your internet connection and try "
+                       "again.".format(phrase))
+
+    if 400 <= status < 500:
+        return Outcome(False, "license_error",
+                       "The Kinetic BIM server couldn't verify your license. "
+                       "Double-check the key you entered, then try again; if "
+                       "it looks correct, contact support@kineticbim.com.")
+
+    return Outcome(False, "server_error",
+                   "The Kinetic BIM server is temporarily unavailable. Please "
+                   "try again in a few minutes; if the problem persists, "
+                   "contact support@kineticbim.com.")
 
 
 def _log_exc(message, exc):
