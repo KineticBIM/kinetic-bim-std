@@ -23,13 +23,26 @@ from bim_core.version import __version__
 SUPPORT_EMAIL = "support@kineticbim.com"
 COPYRIGHT     = "(c) 2026 Kinetic Build (NZ)"
 
+INTRO = [
+    "Kinetic BIM Standard is a suite of Revit tools that automate",
+    "your documentation, QA, and coordination workflow:",
+]
+
+# (name, one-line description) for the About dialog. Descriptions are
+# condensed from each tool's bundle.yaml tooltip.
 TOOLS = [
-    "Auto Tag",
-    "Auto Dimension",
-    "Sheet Create / Rename / Renumber",
-    "Health Audit",
-    "QA Check",
-    "Clash Reporting",
+    ("Auto Tag",
+     "Tag untagged MEP runs (tray, conduit, duct, pipe)."),
+    ("Auto Dimension",
+     "Dimension linear MEP runs to the nearest grid."),
+    ("Sheet Automation",
+     "Bulk create, rename, renumber sheets from Excel/CSV."),
+    ("Health Audit",
+     "Weekly model performance and hygiene check."),
+    ("QA Check",
+     "Compliance check against the project BEP."),
+    ("Clash Reporting",
+     "Navisworks clash workflow into a dated report pack."),
 ]
 
 
@@ -69,14 +82,21 @@ def main():
                 "Run any Kinetic BIM tool first to create it.".format(logs))
         return
 
+    tool_lines = []
+    for name, desc in TOOLS:
+        tool_lines.append("  " + name)
+        tool_lines.append("      " + desc)
+
     body = "\n".join([
         "Kinetic BIM Standard",
         "Version {0}".format(__version__),
         "",
+    ] + INTRO + [
+        "",
         _license_status_line(),
         "",
         "Tools:",
-    ] + ["  - " + t for t in TOOLS] + [
+    ] + tool_lines + [
         "",
         "Support: " + SUPPORT_EMAIL,
         "Logs:    " + logs,
