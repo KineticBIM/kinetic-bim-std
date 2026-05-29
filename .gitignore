@@ -5,3 +5,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+
+# Packaging output from tools/build_extension.py
+build/
+dist/

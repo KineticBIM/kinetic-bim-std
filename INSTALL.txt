@@ -1,0 +1,31 @@
+Kinetic BIM Standard - Installation
+===================================
+
+Requirements
+------------
+  * Autodesk Revit (a supported version) with pyRevit already installed.
+    pyRevit is free: https://github.com/pyrevitlabs/pyRevit/releases
+  * Windows.
+
+Install
+-------
+  1. Close Revit completely (all open windows).
+  2. Unzip this archive to any folder.
+  3. Right-click "install.ps1" and choose "Run with PowerShell".
+       - or, in a PowerShell window in this folder:  .\install.ps1
+  4. Start Revit. A new "Kinetic" tab appears on the ribbon.
+  5. Activate your licence: Kinetic tab > Help > Activate, and paste the
+     licence key from your order confirmation.
+
+If PowerShell blocks the script, open PowerShell and run the installer with:
+     powershell -ExecutionPolicy Bypass -File .\install.ps1
+
+Uninstall
+---------
+  1. Close Revit.
+  2. In a PowerShell window in this folder:  .\install.ps1 -Uninstall
+  3. Start Revit - the Kinetic tab is gone.
+
+Support
+-------
+  bim@kineticbuild.co.nz
