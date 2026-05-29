@@ -115,7 +115,7 @@ def check(tool_name):
         if _ENFORCE_WHEN_ABSENT:
             raise LicenseError(
                 "No license found for this workstation.\n\n"
-                "Activate your seat or contact support@kineticbim.com.")
+                "Activate your seat or contact bim@kineticbuild.co.nz.")
         _log("No machine file found; running in pre-activation grace mode.")
         return True
 
@@ -149,12 +149,12 @@ def require(tool_name):
             return
         message = (
             "{0} is not licensed for this workstation.\n\n"
-            "Contact your team lead or support@kineticbim.com to "
+            "Contact your team lead or bim@kineticbuild.co.nz to "
             "activate or transfer your seat.").format(
                 _display_name(tool_name))
     except LicenseError as exc:
         message = str(exc) or (
-            "License check failed. Contact support@kineticbim.com.")
+            "License check failed. Contact bim@kineticbuild.co.nz.")
 
     # Lazy import: errors.py imports from pyrevit at module top, so a
     # top-level import here would prevent licensing.py from being
@@ -196,11 +196,11 @@ def _verify_signature(parsed):
         # failure, not an invalid license.
         raise LicenseError(
             "License verification is unavailable on this machine.\n\n"
-            "Contact support@kineticbim.com.\n\nDetail: {0}".format(exc))
+            "Contact bim@kineticbuild.co.nz.\n\nDetail: {0}".format(exc))
     if not ok:
         raise LicenseError(
             "The license signature is invalid. The file may have been "
-            "altered.\n\nContact support@kineticbim.com.")
+            "altered.\n\nContact bim@kineticbuild.co.nz.")
 
 
 def _verify_current(parsed):
@@ -210,7 +210,7 @@ def _verify_current(parsed):
         raise LicenseError(
             "Your license expired on {0}.\n\n"
             "Reconnect to the internet to refresh it, or contact "
-            "support@kineticbim.com.".format(when))
+            "bim@kineticbuild.co.nz.".format(when))
 
 
 def _verify_fingerprint(parsed):
@@ -220,11 +220,11 @@ def _verify_fingerprint(parsed):
     except Exception as exc:
         raise LicenseError(
             "Couldn't read this workstation's hardware ID.\n\n"
-            "Contact support@kineticbim.com.\n\nDetail: {0}".format(exc))
+            "Contact bim@kineticbuild.co.nz.\n\nDetail: {0}".format(exc))
     if embedded != local:
         raise LicenseError(
             "This license is registered to a different workstation.\n\n"
-            "Transfer your seat at support@kineticbim.com.")
+            "Transfer your seat at bim@kineticbuild.co.nz.")
 
 
 # --- helpers ----------------------------------------------------------

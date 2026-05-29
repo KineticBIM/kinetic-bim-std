@@ -20,7 +20,7 @@ from bim_core import licensing
 from bim_core.version import __version__
 
 
-SUPPORT_EMAIL = "support@kineticbim.com"
+SUPPORT_EMAIL = "bim@kineticbuild.co.nz"
 COPYRIGHT     = "(c) 2026 Kinetic Build (NZ)"
 
 INTRO = [

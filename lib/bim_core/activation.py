@@ -177,7 +177,7 @@ def _checkout_existing(client, store, key, fp):
     if not machine_id:
         return Outcome(False, "error",
                        "This seat looks active but the workstation record "
-                       "couldn't be found. Contact support@kineticbim.com.")
+                       "couldn't be found. Contact bim@kineticbuild.co.nz.")
     return _checkout(client, store, key, machine_id, "already_active",
                      "This workstation is already licensed - license "
                      "refreshed.")
@@ -203,16 +203,16 @@ def _terminal_outcome(v):
     if code == "EXPIRED":
         return Outcome(False, "expired",
                        "Your license has expired. Renew it or contact "
-                       "support@kineticbim.com.")
+                       "bim@kineticbuild.co.nz.")
     if code == "SUSPENDED":
         return Outcome(False, "suspended",
                        "Your license has been suspended. Contact "
-                       "support@kineticbim.com.")
+                       "bim@kineticbuild.co.nz.")
     if code == "TOO_MANY_MACHINES":
         return _seat_in_use()
     return Outcome(False, "invalid_key",
                    "That license key wasn't recognised. Check it and try "
-                   "again, or contact support@kineticbim.com.")
+                   "again, or contact bim@kineticbuild.co.nz.")
 
 
 def _seat_in_use():
@@ -246,12 +246,12 @@ def _network_outcome(exc, action="reach the Kinetic BIM server"):
         return Outcome(False, "license_error",
                        "The Kinetic BIM server couldn't verify your license. "
                        "Double-check the key you entered, then try again; if "
-                       "it looks correct, contact support@kineticbim.com.")
+                       "it looks correct, contact bim@kineticbuild.co.nz.")
 
     return Outcome(False, "server_error",
                    "The Kinetic BIM server is temporarily unavailable. Please "
                    "try again in a few minutes; if the problem persists, "
-                   "contact support@kineticbim.com.")
+                   "contact bim@kineticbuild.co.nz.")
 
 
 def _log_exc(message, exc):

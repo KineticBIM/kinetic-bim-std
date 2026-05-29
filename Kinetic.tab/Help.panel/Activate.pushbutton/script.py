@@ -20,7 +20,7 @@ from pyrevit import forms
 
 from bim_core import activation
 
-SUPPORT_EMAIL = "support@kineticbim.com"
+SUPPORT_EMAIL = "bim@kineticbuild.co.nz"
 
 
 def _status_line(status):
