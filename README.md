@@ -1,5 +1,10 @@
 # Kinetic BIM Standard
 
+> **Retired (October 2026).** This pyRevit extension is no longer developed or
+> sold. Torque Standard is now a licence tier of the native Torque add-in
+> (`kinetic-bim-pro`): one installer for Revit 2023–2026, no pyRevit, with the
+> licence deciding which tools appear. The repo is kept for history only.
+
 A pyRevit extension for Autodesk Revit that bundles Kinetic BIM's QA,
 documentation, and coordination tools into a single ribbon tab.
 
